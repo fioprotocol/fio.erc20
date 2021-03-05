@@ -90,9 +90,6 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
             oracles[ethaddress].activation_count--;
             oracles[ethaddress].registered[i] = address(0);
           }
-          if (oracles[ethaddress].activation_count == MAXENT-1) {
-            oracles[ethaddress].active == false;
-          }
           if (oracles[ethaddress].activation_count == 0) {
               delete oracles[ethaddress];
           }
@@ -123,9 +120,6 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
           if (custodians[ethaddress].activation_count > 0) {
             custodians[ethaddress].activation_count--;
             custodians[ethaddress].registered[i] = address(0);
-          }
-          if (custodians[ethaddress].activation_count == MAXENT-1) {
-            custodians[ethaddress].active == false;
           }
           if (custodians[ethaddress].activation_count == 0) {
               delete custodians[ethaddress];
