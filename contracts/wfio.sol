@@ -31,7 +31,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
         owner = msg.sender;
     }
 
-      modifier level1 {
+      modifier ownerAndCustodian {
       require(
         ((msg.sender == owner) ||
          (custodians[msg.sender].active == true)),
@@ -40,26 +40,33 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       _;
       }
 
-      modifier level2 {
+      modifier allPrincipals {
       require(
         ((msg.sender == owner) ||
          (custodians[msg.sender].active == true) ||
-         (oracles[msg.sender].active == true)),
+         (oracles[msg.sender].active == true )),
           "Only contract owner, custodians or oracles may call this function."
       );
       _;
       }
 
-    function mint(address to, uint256 amount) public level2 {
+      modifier ownerOnly {
+      require( msg.sender == owner,
+          "Only contract owner can call this function."
+      );
+      _;
+      }
+
+    function mint(address to, uint256 amount) public allPrincipals {
        require(amount < MAXMINTABLE);
        _mint(to, amount);
     }
 
-    function oApprove(address spender, uint256 amount) public level2{
+    function oApprove(address spender, uint256 amount) public allPrincipals{
        approve(spender, amount);
     }
 
-    function oTransferFrom(address from, address to, uint256 amount) public level2 {
+    function oTransferFrom(address from, address to, uint256 amount) public allPrincipals {
        transferFrom(from, to, amount);
     }
 
@@ -67,7 +74,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
         super._beforeTokenTransfer(from, to, amount);
     }
 
-    function regoracle(address ethaddress) public level2 {
+    function regoracle(address ethaddress) public ownerAndCustodian {
       require(ethaddress != address(0), "Must enter a valid eth address");
       require(oracles[ethaddress].active == false, "Oracle is already registered");
       for (uint8 i = 0; i < MAXENT; i++) {
@@ -82,7 +89,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       }
     }
 
-    function unregoracle(address ethaddress) public level2 {
+    function unregoracle(address ethaddress) public ownerAndCustodian {
       require(ethaddress != address(0), "Must enter a valid eth address");
       for (uint8 i = 0; i < MAXENT; i++) {
         if (oracles[ethaddress].registered[i] == msg.sender) {
@@ -98,7 +105,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     } // unregoracle
 
 
-    function regcustodian(address ethaddress) public level1 {
+    function regcustodian(address ethaddress) public ownerAndCustodian {
       require(ethaddress != address(0), "Must enter a valid eth address");
       require(custodians[ethaddress].active == false, "Custodian is already registered");
       for (uint8 i = 0; i < MAXENT; i++) {
@@ -113,7 +120,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       }
     }
 
-    function unregcustodian(address ethaddress) public level1 {
+    function unregcustodian(address ethaddress) public ownerAndCustodian {
       require(ethaddress != address(0), "Must enter a valid eth address");
       for (uint8 i = 0; i < MAXENT; i++) {
         if (custodians[ethaddress].registered[i] == msg.sender) {
