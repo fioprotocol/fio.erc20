@@ -105,7 +105,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       require(ethaddress != address(0), "Must enter a valid eth address");
       require(custodians[ethaddress].active == false, "Custodian is already registered");
       for (uint8 i = 0; i < MAXENT; i++) {
-        require(custodians[ethaddress].registered[i] != msg.sender);
+        require(custodians[ethaddress].registered[i] != msg.sender,  "msg.sender has already registered this ethaddress");
       }
       if (custodians[ethaddress].activation_count < MAXENT) {
         custodians[ethaddress].activation_count++;
