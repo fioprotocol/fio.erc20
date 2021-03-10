@@ -9,6 +9,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     address owner;
     uint8 constant MAXENT = 7;
     uint64 constant MAXMINTABLE = 10000000000000000;
+    uint64 constant MAXBURNABLE = 10000000000000000;
 
     struct custodian {
       mapping ( address => int) registered;
@@ -71,16 +72,23 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       _;
       }
 
-    function mint(address to, uint256 amount) public allPrincipals {
+    function wrap(address account, uint256 amount) public oracleOnly {
        require(amount < MAXMINTABLE);
-       _mint(to, amount);
+
+       _mint(account, amount);
+    }
+      // consensus stuff
+    function unwrap(address account, uint256 amount) public oracleOnly {
+      require(amount < MAXBURNABLE);
+      // consensus stuff
+      _burn(account, amount);
     }
 
-    function oApprove(address spender, uint256 amount) public oracleOnly{
+    function oApprove(address spender, uint256 amount) public oracleOnly {
        approve(spender, amount);
     }
 
-    function oTransferFrom(address from, address to, uint256 amount) public allPrincipals {
+    function oTransferFrom(address from, address to, uint256 amount) public oracleOnly {
        transferFrom(from, to, amount);
     }
 
@@ -101,7 +109,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       }
     }
 
-    function unregoracle(address ethaddress) public custodianOnly {
+    function unregoracle(address ethaddress) public ownerAndCustodian {
       require(ethaddress != address(0), "Must enter a valid eth address");
         if (oracles[ethaddress].registered[msg.sender] != 0) {
           if (oracles[ethaddress].activation_count > 0) {
@@ -116,10 +124,10 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     } // unregoracle
 
 
-    function regcustodian(address ethaddress) public ownerAndCustodian {
+    function regcustodian(address ethaddress) public custodianOnly {
       require(ethaddress != address(0), "Must enter a valid eth address");
       require(custodians[ethaddress].active == false, "Custodian is already registered");
-        require(custodians[ethaddress].registered[msg.sender] == 0,  "msg.sender has already registered this ethaddress");
+      require(custodians[ethaddress].registered[msg.sender] == 0,  "msg.sender has already registered this ethaddress");
       if (custodians[ethaddress].activation_count < MAXENT) {
         custodians[ethaddress].activation_count++;
         custodians[ethaddress].registered[msg.sender];
