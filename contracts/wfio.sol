@@ -74,10 +74,10 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
 
     function wrap(address account, uint256 amount) public oracleOnly {
        require(amount < MAXMINTABLE);
-
+      // consensus stuff
        _mint(account, amount);
     }
-      // consensus stuff
+
     function unwrap(address account, uint256 amount) public oracleOnly {
       require(amount < MAXBURNABLE);
       // consensus stuff
