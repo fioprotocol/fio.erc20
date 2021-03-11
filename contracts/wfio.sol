@@ -1,4 +1,8 @@
-// SPDX-License-Identifier: Unlicense
+// SPDX-License-Identifier: MIT
+// FIO Protocol ERC20 and Oracle Contract
+// Adam Androulidakis 2/2021
+// Prototype: Do not use in production
+
 pragma solidity ^0.6.0;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20Burnable.sol";
