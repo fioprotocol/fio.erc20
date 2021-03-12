@@ -27,13 +27,24 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       bool active;
     }
 
+    struct pending {
+      mapping (address => bool) approver;
+      int approvers;
+    }
+
     mapping ( address => oracle) oracles;
     mapping ( address => custodian) custodians;
+    mapping ( uint256 => pending) approvals; // uint256 hash can be any obtid
 
-    constructor(uint256 _initialSupply) public ERC20("FIO Protocol", "wFIO") {
+    constructor(uint256 _initialSupply, address[] memory newcustodians ) public ERC20("FIO Protocol", "wFIO") {
+        require(newcustodians.length == 10, "wFIO cannot deploy without 10 custodians");
         _mint(msg.sender, _initialSupply);
         _setupDecimals(9);
         owner = msg.sender;
+        for (uint8 i = 0; i < 10; i++ ) {
+          custodians[newcustodians[i]].activation_count = 7;
+          custodians[newcustodians[i]].active = true;
+        }
     }
 
       modifier ownerAndCustodian {
@@ -76,16 +87,42 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       _;
       }
 
-    function wrap(address account, uint256 amount) public oracleOnly {
+    function wrap(address account, uint256 amount, uint256 obtid) public oracleOnly {
        require(amount < MAXMINTABLE);
-      // consensus stuff
-       _mint(account, amount);
+       require(account != address(0), "Must enter a valid eth address");
+       require(obtid != uint256(0), "Must provide valid obtid");
+       require(account != msg.sender, "Cannot wrap wFIO to self");
+       require(approvals[obtid].approver[msg.sender] != false, "oracle has already approved this obtid");
+       if (approvals[obtid].approvers < 3)
+       {
+         approvals[obtid].approvers++;
+       } else {
+         _mint(account, amount);
+         delete approvals[obtid];
+       }
+
     }
 
-    function unwrap(address account, uint256 amount) public oracleOnly {
+    function unwrap(address account, uint256 amount, uint256 obtid) public oracleOnly {
       require(amount < MAXBURNABLE);
-      // consensus stuff
-      _burn(account, amount);
+      require(account != address(0));
+      require(obtid != uint256(0));
+      require(approvals[obtid].approver[msg.sender] != false, "oracle has already approved this obtid");
+      if (approvals[obtid].approvers < 3)
+      {
+        approvals[obtid].approvers++;
+      } else {
+        _burn(account, amount);
+        delete approvals[obtid];
+      }
+
+    }
+
+    function unapprove(address account, uint256 obtid) public oracleOnly {
+      require(account != address(0));
+      require(obtid != uint256(0));
+      require(approvals[obtid].approver[msg.sender] == true, "oracle has not approved this obtid");
+      delete approvals[obtid].approver[msg.sender];
     }
 
     function oApprove(address spender, uint256 amount) public oracleOnly {
@@ -100,7 +137,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
         super._beforeTokenTransfer(from, to, amount);
     }
 
-    function getCustodian(address ethaddress) public view allPrincipals returns (int, bool) {
+    function getCustodian(address ethaddress) public view returns (int, bool) {
       require(ethaddress != address(0), "Must enter a valid eth address");
       return (custodians[ethaddress].activation_count, custodians[ethaddress].active);
     }
@@ -112,6 +149,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
 
     function regoracle(address ethaddress) public custodianOnly {
       require(ethaddress != address(0), "Must enter a valid eth address");
+      require(ethaddress != msg.sender, "Cannot register self");
       require(oracles[ethaddress].active == false, "Oracle is already registered");
       require(oracles[ethaddress].registered[msg.sender] == false, "msg.sender has already registered this ethaddress");
       if (oracles[ethaddress].activation_count < MAXENT) {
@@ -125,6 +163,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
 
     function unregoracle(address ethaddress) public ownerAndCustodian {
       require(ethaddress != address(0), "Must enter a valid eth address");
+      require(ethaddress != msg.sender, "Cannot register self");
       require(oracles[ethaddress].registered[msg.sender] == true, "You have not registered this oracle");
       if (oracles[ethaddress].activation_count > 0) {
         oracles[ethaddress].activation_count--;
