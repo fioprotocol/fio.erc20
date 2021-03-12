@@ -42,7 +42,8 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       _setupDecimals(9);
       owner = msg.sender;
       for (uint8 i = 0; i < 10; i++ ) {
-        custodians[newcustodians[i]].activation_count = 7;
+        require(newcustodians[i] != owner, "Contract owner cannot be custodian");
+        custodians[newcustodians[i]].activation_count = 0; // For clarity - activation_count is zero for these custodians so contract owner may unregister at will
         custodians[newcustodians[i]].active = true;
         custodians[newcustodians[i]].registered[msg.sender] = true;
       }
@@ -171,6 +172,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     function unregoracle(address ethaddress) public ownerAndCustodian {
       require(ethaddress != address(0), "Invalid address");
       require(ethaddress != msg.sender, "Cannot unregister self");
+      require(oracles[ethaddress].active == true, "Oracle is not registered");
       require(oracles[ethaddress].registered[msg.sender] == true, "msg.sender has not registered this oracle");
       if (oracles[ethaddress].activation_count > 0) {
         oracles[ethaddress].activation_count--;
@@ -200,6 +202,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     function unregcust(address ethaddress) public ownerAndCustodian() {
       require(ethaddress != address(0), "Invalid address");
       require(ethaddress != msg.sender, "Cannot unregister self");
+      require(custodians[ethaddress].active == true, "Custodian is not registered");
       require(custodians[ethaddress].registered[msg.sender] == true, "msg.sender has not registered this custodian");
       if (custodians[ethaddress].activation_count > 0) {
         custodians[ethaddress].activation_count--;
