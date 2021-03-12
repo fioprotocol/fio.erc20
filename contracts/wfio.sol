@@ -37,26 +37,27 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     mapping ( uint256 => pending) approvals; // uint256 hash can be any obtid
 
     constructor(uint256 _initialSupply, address[] memory newcustodians ) public ERC20("FIO Protocol", "wFIO") {
-        require(newcustodians.length == 10, "wFIO cannot deploy without 10 custodians");
-        _mint(msg.sender, _initialSupply);
-        _setupDecimals(9);
-        owner = msg.sender;
-        for (uint8 i = 0; i < 10; i++ ) {
-          custodians[newcustodians[i]].activation_count = 7;
-          custodians[newcustodians[i]].active = true;
-        }
+      require(newcustodians.length == 10, "wFIO cannot deploy without 10 custodians");
+      _mint(msg.sender, _initialSupply);
+      _setupDecimals(9);
+      owner = msg.sender;
+      for (uint8 i = 0; i < 10; i++ ) {
+        custodians[newcustodians[i]].activation_count = 7;
+        custodians[newcustodians[i]].active = true;
+        custodians[newcustodians[i]].registered[msg.sender] = true;
+      }
     }
 
-      modifier ownerAndCustodian {
+    modifier ownerAndCustodian {
       require(
         ((msg.sender == owner) ||
          (custodians[msg.sender].active == true)),
           "Only contract owner or custodians may call this function."
       );
       _;
-      }
+    }
 
-      modifier allPrincipals {
+    modifier allPrincipals {
       require(
         ((msg.sender == owner) ||
          (custodians[msg.sender].active == true) ||
@@ -64,28 +65,28 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
           "Only contract owner, custodians or oracles may call this function."
       );
       _;
-      }
+    }
 
-      modifier oracleOnly {
+    modifier oracleOnly {
       require(oracles[msg.sender].active == true,
          "Only a wFIO oracle may call this function."
       );
       _;
-      }
+    }
 
-      modifier custodianOnly {
+    modifier custodianOnly {
       require(custodians[msg.sender].active == true,
          "Only a wFIO custodian may call this function."
       );
       _;
-      }
+    }
 
-      modifier ownerOnly {
+    modifier ownerOnly {
       require( msg.sender == owner,
           "Only contract owner can call this function."
       );
       _;
-      }
+    }
 
     function wrap(address account, uint256 amount, uint256 obtid) public oracleOnly {
        require(amount < MAXMINTABLE);
@@ -148,6 +149,11 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       return (oracles[ethaddress].activation_count, oracles[ethaddress].active);
     }
 
+    function getApprovals(uint256 obtid) public view returns (int) {
+      require(obtid != uint256(0), "Invalid obtid");
+      return approvals[obtid].approvers;
+    }
+
     function regoracle(address ethaddress) public custodianOnly {
       require(ethaddress != address(0), "Invalid address");
       require(ethaddress != msg.sender, "Cannot register self");
@@ -191,17 +197,17 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       }
     }
 
-    function unregcust(address ethaddress) public custodianOnly {
+    function unregcust(address ethaddress) public ownerAndCustodian() {
       require(ethaddress != address(0), "Invalid address");
       require(ethaddress != msg.sender, "Cannot unregister self");
       require(custodians[ethaddress].registered[msg.sender] == true, "msg.sender has not registered this custodian");
-          if (custodians[ethaddress].activation_count > 0) {
-            custodians[ethaddress].activation_count--;
-            delete custodians[ethaddress].registered[msg.sender];
-          }
-          if (custodians[ethaddress].activation_count == 0) {
-              delete custodians[ethaddress];
-          }
+      if (custodians[ethaddress].activation_count > 0) {
+        custodians[ethaddress].activation_count--;
+        delete custodians[ethaddress].registered[msg.sender];
+      }
+      if (custodians[ethaddress].activation_count == 0) {
+          delete custodians[ethaddress];
+      }
     } //unregcustodian
 
     // ------------------------------------------------------------------------
