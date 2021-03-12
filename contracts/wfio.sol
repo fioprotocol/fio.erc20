@@ -16,13 +16,13 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     uint64 constant MAXBURNABLE = 10000000000000000;
 
     struct custodian {
-      mapping ( address => int) registered;
+      mapping ( address => bool) registered;
       int activation_count;
       bool active;
     }
 
     struct oracle {
-      mapping ( address => int) registered;
+      mapping ( address => bool) registered;
       int activation_count;
       bool active;
     }
@@ -100,13 +100,23 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
         super._beforeTokenTransfer(from, to, amount);
     }
 
+    function getCustodian(address ethaddress) public view allPrincipals returns (int, bool) {
+      require(ethaddress != address(0), "Must enter a valid eth address");
+      return (custodians[ethaddress].activation_count, custodians[ethaddress].active);
+    }
+
+    function getOracle(address ethaddress) public view returns (bool) {
+      require(ethaddress != address(0), "Must enter a valid eth address");
+      return oracles[ethaddress].active;
+    }
+
     function regoracle(address ethaddress) public custodianOnly {
       require(ethaddress != address(0), "Must enter a valid eth address");
       require(oracles[ethaddress].active == false, "Oracle is already registered");
-      require(oracles[ethaddress].registered[msg.sender] == 0, "msg.sender has already registered this ethaddress");
+      require(oracles[ethaddress].registered[msg.sender] == false, "msg.sender has already registered this ethaddress");
       if (oracles[ethaddress].activation_count < MAXENT) {
         oracles[ethaddress].activation_count++;
-        oracles[ethaddress].registered[msg.sender];
+        oracles[ethaddress].registered[msg.sender] = true;
       }
       if (oracles[ethaddress].activation_count == MAXENT){
         oracles[ethaddress].active=true;
@@ -115,26 +125,25 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
 
     function unregoracle(address ethaddress) public ownerAndCustodian {
       require(ethaddress != address(0), "Must enter a valid eth address");
-        if (oracles[ethaddress].registered[msg.sender] != 0) {
-          if (oracles[ethaddress].activation_count > 0) {
-            oracles[ethaddress].activation_count--;
-            delete oracles[ethaddress].registered[msg.sender];
-          }
-          if (oracles[ethaddress].activation_count == 0) {
-              delete oracles[ethaddress];
-          }
-        }
+      require(oracles[ethaddress].registered[msg.sender] == true, "You have not registered this oracle");
+      if (oracles[ethaddress].activation_count > 0) {
+        oracles[ethaddress].activation_count--;
+        delete oracles[ethaddress].registered[msg.sender];
+      }
+      if (oracles[ethaddress].activation_count == 0) {
+          delete oracles[ethaddress];
+      }
 
     } // unregoracle
 
 
-    function regcustodian(address ethaddress) public custodianOnly {
+    function regcustodian(address ethaddress) public ownerAndCustodian {
       require(ethaddress != address(0), "Must enter a valid eth address");
       require(custodians[ethaddress].active == false, "Custodian is already registered");
-      require(custodians[ethaddress].registered[msg.sender] == 0,  "msg.sender has already registered this ethaddress");
+      require(custodians[ethaddress].registered[msg.sender] == false,  "msg.sender has already registered this ethaddress");
       if (custodians[ethaddress].activation_count < MAXENT) {
         custodians[ethaddress].activation_count++;
-        custodians[ethaddress].registered[msg.sender];
+        custodians[ethaddress].registered[msg.sender] = true;
       }
       if (custodians[ethaddress].activation_count == MAXENT) {
         custodians[ethaddress].active = true;
@@ -143,7 +152,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
 
     function unregcustodian(address ethaddress) public ownerAndCustodian {
       require(ethaddress != address(0), "Must enter a valid eth address");
-        if (custodians[ethaddress].registered[msg.sender] != 0) {
+      require(custodians[ethaddress].registered[msg.sender] == true, "You have not registered this custodian");
           if (custodians[ethaddress].activation_count > 0) {
             custodians[ethaddress].activation_count--;
             delete custodians[ethaddress].registered[msg.sender];
@@ -151,7 +160,6 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
           if (custodians[ethaddress].activation_count == 0) {
               delete custodians[ethaddress];
           }
-        }
     } //unregcustodian
 
     // ------------------------------------------------------------------------
