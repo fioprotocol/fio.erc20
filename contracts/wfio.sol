@@ -56,7 +56,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       );
       _;
     }
-
+    /*
     modifier allPrincipals {
       require(
         ((msg.sender == owner) ||
@@ -66,7 +66,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       );
       _;
     }
-
+    */
     modifier oracleOnly {
       require(oracles[msg.sender].active == true,
          "Only a wFIO oracle may call this function."
@@ -158,7 +158,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       require(ethaddress != address(0), "Invalid address");
       require(ethaddress != msg.sender, "Cannot register self");
       require(oracles[ethaddress].active == false, "Oracle is already registered");
-      require(oracles[ethaddress].registered[msg.sender] == false, "msg.sender has already registered this ethaddress");
+      require(oracles[ethaddress].registered[msg.sender] == false, "msg.sender has already registered this oracle");
       if (oracles[ethaddress].activation_count < MAXENT) {
         oracles[ethaddress].activation_count++;
         oracles[ethaddress].registered[msg.sender] = true;
@@ -187,7 +187,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       require(ethaddress != address(0), "Invalid address");
       require(ethaddress != msg.sender, "Cannot register self");
       require(custodians[ethaddress].active == false, "Custodian is already registered");
-      require(custodians[ethaddress].registered[msg.sender] == false,  "msg.sender has already registered this ethaddress");
+      require(custodians[ethaddress].registered[msg.sender] == false,  "msg.sender has already registered this custodian");
       if (custodians[ethaddress].activation_count < MAXENT) {
         custodians[ethaddress].activation_count++;
         custodians[ethaddress].registered[msg.sender] = true;
