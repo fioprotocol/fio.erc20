@@ -30,6 +30,8 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     struct pending {
       mapping (address => bool) approver;
       int approvers;
+      address recipient;
+      uint256 amount;
     }
 
     mapping ( address => oracle) oracles;
@@ -94,13 +96,23 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
        require(account != address(0), "Invalid account");
        require(obtid != uint256(0), "Invalid obtid");
        require(account != msg.sender, "Cannot wrap wFIO to self");
-       require(approvals[obtid].approver[msg.sender] == false, "oracle has already approved this obtid");
        if (approvals[obtid].approvers < 3)
        {
+         require(approvals[obtid].approver[msg.sender] == false, "oracle has already approved this obtid");
          approvals[obtid].approvers++;
+         approvals[obtid].approver[msg.sender] = true;
        } else {
+         require(approvals[obtid].approver[msg.sender] == true, "An approving oracle must execute wrap");
          _mint(account, amount);
          delete approvals[obtid];
+       }
+       if (approvals[obtid].approvers == 1) {
+         approvals[obtid].recipient = account;
+         approvals[obtid].amount = amount;
+       }
+       if (approvals[obtid].approvers > 1) {
+         require(approvals[obtid].recipient == account, "recipient account does not match prior approvals");
+         require(approvals[obtid].amount == amount, "amount does not match prior approvals");
        }
 
     }
@@ -109,15 +121,24 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       require(amount < MAXBURNABLE);
       require(account != address(0), "Invalid account");
       require(obtid != uint256(0), "Invalid obtid");
-      require(approvals[obtid].approver[msg.sender] == false, "oracle has already approved this obtid");
       if (approvals[obtid].approvers < 3)
       {
+        require(approvals[obtid].approver[msg.sender] == false, "oracle has already approved this obtid");
         approvals[obtid].approvers++;
+        approvals[obtid].approver[msg.sender] = true;
       } else {
+       require(approvals[obtid].approver[msg.sender] == true, "An approving oracle must execute unwrap");
         _burn(account, amount);
         delete approvals[obtid];
       }
-
+      if (approvals[obtid].approvers == 1) {
+        approvals[obtid].recipient = account;
+        approvals[obtid].amount = amount;
+      }
+      if (approvals[obtid].approvers > 1) {
+        require(approvals[obtid].recipient == account, "recipient account does not match prior approvals");
+        require(approvals[obtid].amount == amount, "amount does not match prior approvals");
+      }
     }
 
     function unapprove(address account, uint256 obtid) public oracleOnly {
@@ -150,9 +171,9 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       return (oracles[ethaddress].activation_count, oracles[ethaddress].active);
     }
 
-    function getApprovals(uint256 obtid) public view returns (int) {
+    function getApprovals(uint256 obtid) public view returns (int, address, uint256) {
       require(obtid != uint256(0), "Invalid obtid");
-      return approvals[obtid].approvers;
+      return (approvals[obtid].approvers, approvals[obtid].recipient, approvals[obtid].amount);
     }
 
     function regoracle(address ethaddress) public custodianOnly {
