@@ -122,6 +122,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       require(account != address(0), "Invalid account");
       require(obtid != uint256(0), "Invalid obtid");
       require(approvals[obtid].approver[msg.sender] == true, "oracle has not approved this obtid");
+      approvals[obtid].approvers--;
       delete approvals[obtid].approver[msg.sender];
     }
 
