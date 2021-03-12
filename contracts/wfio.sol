@@ -92,7 +92,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
        require(account != address(0), "Must enter a valid eth address");
        require(obtid != uint256(0), "Must provide valid obtid");
        require(account != msg.sender, "Cannot wrap wFIO to self");
-       require(approvals[obtid].approver[msg.sender] != false, "oracle has already approved this obtid");
+       require(approvals[obtid].approver[msg.sender] == false, "oracle has already approved this obtid");
        if (approvals[obtid].approvers < 3)
        {
          approvals[obtid].approvers++;
@@ -107,7 +107,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       require(amount < MAXBURNABLE);
       require(account != address(0));
       require(obtid != uint256(0));
-      require(approvals[obtid].approver[msg.sender] != false, "oracle has already approved this obtid");
+      require(approvals[obtid].approver[msg.sender] == false, "oracle has already approved this obtid");
       if (approvals[obtid].approvers < 3)
       {
         approvals[obtid].approvers++;
@@ -142,9 +142,9 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       return (custodians[ethaddress].activation_count, custodians[ethaddress].active);
     }
 
-    function getOracle(address ethaddress) public view returns (bool) {
+    function getOracle(address ethaddress) public view returns (int, bool) {
       require(ethaddress != address(0), "Must enter a valid eth address");
-      return oracles[ethaddress].active;
+      return (oracles[ethaddress].activation_count, oracles[ethaddress].active);
     }
 
     function regoracle(address ethaddress) public custodianOnly {
