@@ -92,32 +92,14 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     }
 
     function wrap(address account, uint256 amount, uint256 obtid) public oracleOnly {
-       require(amount < MAXMINTABLE);
-       require(account != address(0), "Invalid account");
-       require(obtid != uint256(0), "Invalid obtid");
-       require(account != msg.sender, "Cannot wrap wFIO to self");
-       if (approvals[obtid].approvers < 3)
-       {
-         require(approvals[obtid].approver[msg.sender] == false, "oracle has already approved this obtid");
-         approvals[obtid].approvers++;
-         approvals[obtid].approver[msg.sender] = true;
-       } else {
-         require(approvals[obtid].approver[msg.sender] == true, "An approving oracle must execute wrap");
-         _mint(account, amount);
-         delete approvals[obtid];
-       }
-       if (approvals[obtid].approvers == 1) {
-         approvals[obtid].recipient = account;
-         approvals[obtid].amount = amount;
-       }
-       if (approvals[obtid].approvers > 1) {
-         require(approvals[obtid].recipient == account, "recipient account does not match prior approvals");
-         require(approvals[obtid].amount == amount, "amount does not match prior approvals");
-       }
-
+      append(account, amount, obtid, true);
     }
 
     function unwrap(address account, uint256 amount, uint256 obtid) public oracleOnly {
+      append(account, amount, obtid, false);
+    }
+
+    function append(address account, uint256 amount, uint256 obtid, bool wrapping) internal oracleOnly {
       require(amount < MAXBURNABLE);
       require(account != address(0), "Invalid account");
       require(obtid != uint256(0), "Invalid obtid");
@@ -128,7 +110,11 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
         approvals[obtid].approver[msg.sender] = true;
       } else {
        require(approvals[obtid].approver[msg.sender] == true, "An approving oracle must execute unwrap");
-        _burn(account, amount);
+       if (wrapping) {
+         _mint(account, amount);
+       } else {
+         _burn(account, amount);
+       }
         delete approvals[obtid];
       }
       if (approvals[obtid].approvers == 1) {
