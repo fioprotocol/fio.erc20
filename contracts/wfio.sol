@@ -32,6 +32,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       int approvers;
       address recipient;
       uint256 amount;
+      bool wrap;
     }
 
     mapping ( address => oracle) oracles;
@@ -120,10 +121,12 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       if (approvals[obtid].approvers == 1) {
         approvals[obtid].recipient = account;
         approvals[obtid].amount = amount;
+        approvals[obtid].wrap = wrapping == true ? true : false;
       }
       if (approvals[obtid].approvers > 1) {
         require(approvals[obtid].recipient == account, "recipient account does not match prior approvals");
         require(approvals[obtid].amount == amount, "amount does not match prior approvals");
+        require(approvals[obtid].wrap == wrapping, "wrap type is incorrect");
       }
     }
 
