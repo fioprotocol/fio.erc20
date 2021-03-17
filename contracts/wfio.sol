@@ -35,7 +35,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     }
 
     event unwrapped(string fioaddress, uint256 amount);
-    event wrapped(address ethaddress, uint256 amount);
+    event wrapped(address ethaddress, uint256 amount, uint256 obtid);
 
     mapping ( address => oracle) oracles;
     mapping ( address => custodian) custodians;
@@ -68,13 +68,6 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       _;
     }
 
-    modifier ownerOnly {
-      require( msg.sender == owner,
-          "Only contract owner can call this function."
-      );
-      _;
-    }
-
     function wrap(address account, uint256 amount, uint256 obtid) public oracleOnly {
       require(amount < MINCUSTBURNABLE);
       require(account != address(0), "Invalid account");
@@ -84,10 +77,11 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
         require(approvals[obtid].approver[msg.sender] == false, "oracle has already approved this obtid");
         approvals[obtid].approvers++;
         approvals[obtid].approver[msg.sender] = true;
-      } else {
+      }
+      if (approvals[obtid].approvers == 3) {
        require(approvals[obtid].approver[msg.sender] == true, "An approving oracle must execute unwrap");
          _mint(account, amount);
-         emit wrapped(account, amount);
+         emit wrapped(account, amount, obtid);
         delete approvals[obtid];
       }
       if (approvals[obtid].approvers == 1) {
