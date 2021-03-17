@@ -12,20 +12,22 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
 
     address owner;
     uint8 constant MINCUST = 7;
-    uint64 constant MINCUSTMINTABLE = 10000000000000000;
-    uint64 constant MINCUSTBURNABLE = MINCUSTMINTABLE;
+    uint64 constant MINTABLE = 10000000000000000;
+    uint64 constant BURNABLE = MINTABLE;
 
     struct custodian {
       mapping ( address => bool) registered;
       int activation_count;
       bool active;
     }
+    int custodian_count;
 
     struct oracle {
       mapping ( address => bool) registered;
       int activation_count;
       bool active;
     }
+    int oracle_count;
 
     struct pending {
       mapping (address => bool) approver;
@@ -52,6 +54,8 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
         custodians[newcustodians[i]].active = true;
         custodians[newcustodians[i]].registered[msg.sender] = true;
       }
+      custodian_count = 10;
+      oracle_count = 0;
     }
 
     modifier oracleOnly {
@@ -69,7 +73,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     }
 
     function wrap(address account, uint256 amount, uint256 obtid) public oracleOnly {
-      require(amount < MINCUSTBURNABLE);
+      require(amount < BURNABLE);
       require(account != address(0), "Invalid account");
       require(obtid != uint256(0), "Invalid obtid");
       if (approvals[obtid].approvers < 3)
@@ -111,14 +115,14 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
         super._beforeTokenTransfer(from, to, amount);
     }
 
-    function getCustodian(address ethaddress) public view returns (int, bool) {
+    function getCustodian(address ethaddress) public view returns (int, bool, int) {
       require(ethaddress != address(0), "Invalid address");
-      return (custodians[ethaddress].activation_count, custodians[ethaddress].active);
+      return (custodians[ethaddress].activation_count, custodians[ethaddress].active, custodian_count);
     }
 
-    function getOracle(address ethaddress) public view returns (int, bool) {
+    function getOracle(address ethaddress) public view returns (int, bool, int) {
       require(ethaddress != address(0), "Invalid address");
-      return (oracles[ethaddress].activation_count, oracles[ethaddress].active);
+      return (oracles[ethaddress].activation_count, oracles[ethaddress].active, oracle_count);
     }
 
     function getApprovals(uint256 obtid) public view returns (int, address, uint256) {
@@ -137,20 +141,22 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       }
       if (oracles[ethaddress].activation_count == MINCUST){
         oracles[ethaddress].active=true;
+        oracle_count++;
       }
     }
 
     function unregoracle(address ethaddress) public custodianOnly {
       require(ethaddress != address(0), "Invalid address");
       require(ethaddress != msg.sender, "Cannot unregister self");
+      require(oracle_count > 0, "No oracles remaining");
       require(oracles[ethaddress].active == true, "Oracle is not registered");
-      require(oracles[ethaddress].registered[msg.sender] == true, "msg.sender has not registered this oracle");
       if (oracles[ethaddress].activation_count > 0) {
         oracles[ethaddress].activation_count--;
         delete oracles[ethaddress].registered[msg.sender];
       }
       if (oracles[ethaddress].activation_count == 0) {
           delete oracles[ethaddress];
+          oracle_count--;
       }
 
     } // unregoracle
@@ -167,6 +173,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       }
       if (custodians[ethaddress].activation_count == MINCUST) {
         custodians[ethaddress].active = true;
+        custodian_count++;
       }
     }
 
@@ -174,13 +181,14 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       require(ethaddress != address(0), "Invalid address");
       require(ethaddress != msg.sender, "Cannot unregister self");
       require(custodians[ethaddress].active == true, "Custodian is not registered");
-      require(custodians[ethaddress].registered[msg.sender] == true, "msg.sender has not registered this custodian");
+      require(custodian_count > MINCUST, "Must contain 7 custodians");
       if (custodians[ethaddress].activation_count > 0) {
         custodians[ethaddress].activation_count--;
         delete custodians[ethaddress].registered[msg.sender];
       }
       if (custodians[ethaddress].activation_count == 0) {
           delete custodians[ethaddress];
+          custodian_count--;
       }
     } //unregcustodian
 
