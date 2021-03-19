@@ -100,7 +100,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     }
 
     function unwrap(string memory fioaddress, uint256 amount) public {
-      require(bytes(fioaddress).length > 0 && bytes(fioaddress).length <= 64, "Invalid FIO Address");
+      require(bytes(fioaddress).length > 2 && bytes(fioaddress).length <= 64, "Invalid FIO Address");
       _burn(msg.sender, amount);
       emit unwrapped(fioaddress, amount);
     }
