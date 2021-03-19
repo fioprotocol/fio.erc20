@@ -10,10 +10,11 @@ import "@openzeppelin/contracts/token/ERC20/ERC20Pausable.sol";
 
 contract WFIO is ERC20Burnable, ERC20Pausable {
 
+    using SafeMath for uint256;
     address owner;
     uint8 constant MINCUST = 7;
-    uint64 constant MINTABLE = 10000000000000000;
-    uint64 constant BURNABLE = MINTABLE;
+    uint256 constant MINTABLE = 10000000000000000;
+    uint256 constant BURNABLE = MINTABLE;
 
     struct custodian {
       mapping ( address => bool) registered;
@@ -76,13 +77,13 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       require(amount < BURNABLE);
       require(account != address(0), "Invalid account");
       require(obtid != uint256(0), "Invalid obtid");
-      if (approvals[obtid].approvers < 3)
-      {
+      int reqoracles = ((oracle_count / 3) * 2 + 1);
+      if (approvals[obtid].approvers < reqoracles) {
         require(approvals[obtid].approver[msg.sender] == false, "oracle has already approved this obtid");
         approvals[obtid].approvers++;
         approvals[obtid].approver[msg.sender] = true;
       }
-      if (approvals[obtid].approvers == 3) {
+      if (approvals[obtid].approvers == reqoracles) {
        require(approvals[obtid].approver[msg.sender] == true, "An approving oracle must execute unwrap");
          _mint(account, amount);
          emit wrapped(account, amount, obtid);
@@ -147,7 +148,6 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
 
     function unregoracle(address ethaddress) public custodianOnly {
       require(ethaddress != address(0), "Invalid address");
-      require(ethaddress != msg.sender, "Cannot unregister self");
       require(oracle_count > 0, "No oracles remaining");
       require(oracles[ethaddress].active == true, "Oracle is not registered");
       if (oracles[ethaddress].activation_count > 0) {
@@ -179,7 +179,6 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
 
     function unregcust(address ethaddress) public custodianOnly {
       require(ethaddress != address(0), "Invalid address");
-      require(ethaddress != msg.sender, "Cannot unregister self");
       require(custodians[ethaddress].active == true, "Custodian is not registered");
       require(custodian_count > MINCUST, "Must contain 7 custodians");
       if (custodians[ethaddress].activation_count > 0) {
