@@ -10,7 +10,6 @@ import "@openzeppelin/contracts/token/ERC20/ERC20Pausable.sol";
 
 contract WFIO is ERC20Burnable, ERC20Pausable {
 
-    using SafeMath for uint256;
     address owner;
     uint8 constant MINCUST = 7;
     uint256 constant MINTABLE = 10000000000000000;
