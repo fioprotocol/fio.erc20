@@ -76,13 +76,13 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       require(amount < BURNABLE);
       require(account != address(0), "Invalid account");
       require(obtid != uint256(0), "Invalid obtid");
-      int reqoracles = ((oracle_count / 3) * 2 + 1);
-      if (approvals[obtid].approvers < reqoracles) {
+
+      if (approvals[obtid].approvers < oracle_count) {
         require(approvals[obtid].approver[msg.sender] == false, "oracle has already approved this obtid");
         approvals[obtid].approvers++;
         approvals[obtid].approver[msg.sender] = true;
       }
-      if (approvals[obtid].approvers == reqoracles) {
+      if (approvals[obtid].approvers == oracle_count) {
        require(approvals[obtid].approver[msg.sender] == true, "An approving oracle must execute wrap");
          _mint(account, amount);
          emit wrapped(account, amount, obtid);
@@ -102,14 +102,6 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       require(bytes(fioaddress).length > 3 && bytes(fioaddress).length <= 64, "Invalid FIO Address");
       _burn(msg.sender, amount);
       emit unwrapped(fioaddress, amount);
-    }
-
-    function oApprove(address spender, uint256 amount) public oracleOnly {
-       approve(spender, amount);
-    }
-
-    function oTransferFrom(address from, address to, uint256 amount) public oracleOnly {
-       transferFrom(from, to, amount);
     }
 
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Pausable) {
@@ -136,11 +128,12 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       require(ethaddress != msg.sender, "Cannot register self");
       require(oracles[ethaddress].active == false, "Oracle is already registered");
       require(oracles[ethaddress].registered[msg.sender] == false, "msg.sender has already registered this oracle");
-      if (oracles[ethaddress].activation_count < MINCUST) {
+      int reqcust = ((custodian_count / 3) * 2 + 1);
+      if (oracles[ethaddress].activation_count < reqcust) {
         oracles[ethaddress].activation_count++;
         oracles[ethaddress].registered[msg.sender] = true;
       }
-      if (oracles[ethaddress].activation_count == MINCUST){
+      if (oracles[ethaddress].activation_count == reqcust){
         oracles[ethaddress].active=true;
         oracle_count++;
       }
@@ -167,11 +160,12 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       require(ethaddress != msg.sender, "Cannot register self");
       require(custodians[ethaddress].active == false, "Custodian is already registered");
       require(custodians[ethaddress].registered[msg.sender] == false,  "msg.sender has already registered this custodian");
-      if (custodians[ethaddress].activation_count < MINCUST) {
+      int reqcust = ((custodian_count / 3) * 2 + 1);
+      if (custodians[ethaddress].activation_count < reqcust) {
         custodians[ethaddress].activation_count++;
         custodians[ethaddress].registered[msg.sender] = true;
       }
-      if (custodians[ethaddress].activation_count == MINCUST) {
+      if (custodians[ethaddress].activation_count == reqcust) {
         custodians[ethaddress].active = true;
         custodian_count++;
       }
