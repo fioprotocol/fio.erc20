@@ -83,7 +83,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
         approvals[obtid].approver[msg.sender] = true;
       }
       if (approvals[obtid].approvers == reqoracles) {
-       require(approvals[obtid].approver[msg.sender] == true, "An approving oracle must execute unwrap");
+       require(approvals[obtid].approver[msg.sender] == true, "An approving oracle must execute wrap");
          _mint(account, amount);
          emit wrapped(account, amount, obtid);
         delete approvals[obtid];
