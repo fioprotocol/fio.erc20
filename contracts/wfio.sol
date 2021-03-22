@@ -82,12 +82,6 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
         approvals[obtid].approvers++;
         approvals[obtid].approver[msg.sender] = true;
       }
-      if (approvals[obtid].approvers == oracle_count) {
-       require(approvals[obtid].approver[msg.sender] == true, "An approving oracle must execute wrap");
-         _mint(account, amount);
-         emit wrapped(account, amount, obtid);
-        delete approvals[obtid];
-      }
       if (approvals[obtid].approvers == 1) {
         approvals[obtid].account = account;
         approvals[obtid].amount = amount;
@@ -96,6 +90,13 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
         require(approvals[obtid].account == account, "recipient account does not match prior approvals");
         require(approvals[obtid].amount == amount, "amount does not match prior approvals");
       }
+      if (approvals[obtid].approvers == oracle_count) {
+       require(approvals[obtid].approver[msg.sender] == true, "An approving oracle must execute wrap");
+         _mint(account, amount);
+         emit wrapped(account, amount, obtid);
+        delete approvals[obtid];
+      }
+
     }
 
     function unwrap(string memory fioaddress, uint256 amount) public {
@@ -153,7 +154,6 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       }
 
     } // unregoracle
-
 
     function regcust(address ethaddress) public custodianOnly {
       require(ethaddress != address(0), "Invalid address");
