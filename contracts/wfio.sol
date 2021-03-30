@@ -11,9 +11,8 @@ import "@openzeppelin/contracts/token/ERC20/ERC20Pausable.sol";
 contract WFIO is ERC20Burnable, ERC20Pausable {
 
     address owner;
-    uint8 constant MINCUST = 7;
+
     uint256 constant MINTABLE = 10000000000000000;
-    uint256 constant BURNABLE = MINTABLE;
 
     struct custodian {
       bool active;
@@ -77,7 +76,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     }
 
     function wrap(address account, uint256 amount, uint256 obtid) public oracleOnly {
-      require(amount < BURNABLE);
+      require(amount < MINTABLE);
       require(account != address(0), "Invalid account");
       require(obtid != uint256(0), "Invalid obtid");
       require(oracle_count >= 3, "Oracles must be 3 or greater");
@@ -192,7 +191,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     function unregcust(address ethaddress) public custodianOnly {
       require(ethaddress != address(0), "Invalid address");
       require(custodians[ethaddress].active == true, "Custodian is not registered");
-      require(custodian_count > MINCUST, "Must contain 7 custodians");
+      require(custodian_count > 7, "Must contain 7 custodians");
       uint256 id = uint256(keccak256(bytes(abi.encodePacked("uc",ethaddress, ucustmapv))));
       require(approvals[id].approved[msg.sender] == false, "Cannot unregister custodian again");
       int reqcust = ((custodian_count / 3) * 2 + 1);
