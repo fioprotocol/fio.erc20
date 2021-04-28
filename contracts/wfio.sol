@@ -77,6 +77,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
 
     function wrap(address account, uint256 amount, string memory obtid) public oracleOnly {
       require(amount < MINTABLE);
+      require(bytes(obtid).length > 0, "Invalid obtid");
       require(account != address(0), "Invalid account");
       require(oracle_count >= 3, "Oracles must be 3 or greater");
       bytes32 obthash = keccak256(bytes(abi.encodePacked(obtid)));
@@ -123,6 +124,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     }
 
     function getApproval(string memory obtid) public view returns (int, address, uint256) {
+      require(bytes(obtid).length > 0, "Invalid obtid");
       bytes32 obthash = keccak256(bytes(abi.encodePacked(obtid)));
       return (approvals[obthash].approvals, approvals[obthash].account, approvals[obthash].amount);
     }
