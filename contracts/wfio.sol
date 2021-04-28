@@ -75,29 +75,29 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       _;
     }
 
-    function wrap(address account, uint256 amount, bytes32 obtid) public oracleOnly {
+    function wrap(address account, uint256 amount, string memory obtid) public oracleOnly {
       require(amount < MINTABLE);
       require(account != address(0), "Invalid account");
-      require(obtid[0] != 0, "Invalid obtid");
       require(oracle_count >= 3, "Oracles must be 3 or greater");
-      if (approvals[obtid].approvals < oracle_count) {
-        require(approvals[obtid].approved[msg.sender] == false, "oracle has already approved this obtid");
-        approvals[obtid].approvals++;
-        approvals[obtid].approved[msg.sender] = true;
+      bytes32 obthash = keccak256(bytes(abi.encodePacked(obtid)));
+      if (approvals[obthash].approvals < oracle_count) {
+        require(approvals[obthash].approved[msg.sender] == false, "oracle has already approved this obtid");
+        approvals[obthash].approvals++;
+        approvals[obthash].approved[msg.sender] = true;
       }
-      if (approvals[obtid].approvals == 1) {
-        approvals[obtid].account = account;
-        approvals[obtid].amount = amount;
+      if (approvals[obthash].approvals == 1) {
+        approvals[obthash].account = account;
+        approvals[obthash].amount = amount;
       }
-      if (approvals[obtid].approvals > 1) {
-        require(approvals[obtid].account == account, "recipient account does not match prior approvals");
-        require(approvals[obtid].amount == amount, "amount does not match prior approvals");
+      if (approvals[obthash].approvals > 1) {
+        require(approvals[obthash].account == account, "recipient account does not match prior approvals");
+        require(approvals[obthash].amount == amount, "amount does not match prior approvals");
       }
-      if (approvals[obtid].approvals == oracle_count) {
-       require(approvals[obtid].approved[msg.sender] == true, "An approving oracle must execute wrap");
+      if (approvals[obthash].approvals == oracle_count) {
+       require(approvals[obthash].approved[msg.sender] == true, "An approving oracle must execute wrap");
          _mint(account, amount);
-         emit wrapped(account, amount, obtid);
-        delete approvals[obtid];
+         emit wrapped(account, amount, obthash);
+        delete approvals[obthash];
       }
 
     }
@@ -122,9 +122,9 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       return (oracles[ethaddress].active, oracle_count);
     }
 
-    function getApproval(bytes32 obtid) public view returns (int, address, uint256) {
-      require(obtid[0] != 0, "Invalid obtid");
-      return (approvals[obtid].approvals, approvals[obtid].account, approvals[obtid].amount);
+    function getApproval(string memory obtid) public view returns (int, address, uint256) {
+      bytes32 obthash = keccak256(bytes(abi.encodePacked(obtid)));
+      return (approvals[obthash].approvals, approvals[obthash].account, approvals[obthash].amount);
     }
 
     function regoracle(address ethaddress) public custodianOnly {
