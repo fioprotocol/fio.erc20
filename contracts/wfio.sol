@@ -38,7 +38,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     int ucustmapv;
 
     event unwrapped(string fioaddress, uint256 amount);
-    event wrapped(address ethaddress, uint256 amount, bytes32 obtid);
+    event wrapped(address ethaddress, uint256 amount, string obtid);
     event custodian_unregistered(address ethaddress, bytes32 eid);
     event custodian_registered(address ethaddress, bytes32 eid);
     event oracle_unregistered(address ethaddress, bytes32 eid);
@@ -97,7 +97,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       if (approvals[obthash].approvals == oracle_count) {
        require(approvals[obthash].approved[msg.sender] == true, "An approving oracle must execute wrap");
          _mint(account, amount);
-         emit wrapped(account, amount, obthash);
+         emit wrapped(account, amount, obtid);
         delete approvals[obthash];
       }
 
