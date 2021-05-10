@@ -4,6 +4,7 @@
 // Prototype: Do not use in production
 
 pragma solidity ^0.6.0;
+
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20Burnable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20Pausable.sol";
@@ -45,6 +46,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     event oracle_registered(address ethaddress, bytes32 eid);
 
     mapping ( address => oracle) oracles;
+    address[] oraclelist;
     mapping ( address => custodian) custodians;
     mapping ( bytes32 => pending) approvals; // bytes32 hash can be any obtid
 
@@ -123,6 +125,10 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       return (oracles[ethaddress].active, oracle_count);
     }
 
+    function getOracles() public view returns(address[] memory) {
+      return oraclelist;
+    }
+
     function getApproval(string memory obtid) public view returns (int, address, uint256) {
       require(bytes(obtid).length > 0, "Invalid obtid");
       bytes32 obthash = keccak256(bytes(abi.encodePacked(obtid)));
@@ -142,6 +148,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       }
       if (approvals[id].approvals == reqcust){
         oracles[ethaddress].active=true;
+        oraclelist.push(ethaddress);
         oracle_count++;
         delete approvals[id];
         roracmapv++;
@@ -153,6 +160,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       require(ethaddress != address(0), "Invalid address");
       require(oracle_count > 0, "No oracles remaining");
       bytes32 id = keccak256(bytes(abi.encodePacked("uo",ethaddress, uoracmapv)));
+      require(approvals[id].approved[msg.sender] == false,  "msg.sender has already approved this oracle deactivation");
       require(oracles[ethaddress].active == true, "Oracle is not registered");
       int reqcust = ((custodian_count / 3) * 2 + 1);
       if (approvals[id].approvals < reqcust) {
@@ -165,6 +173,15 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
           oracle_count--;
           delete approvals[id];
           uoracmapv++;
+
+          for(uint16 i = 0; i <= oraclelist.length - 1; i++) {
+            if(oraclelist[i] == ethaddress) {
+              oraclelist[i] = oraclelist[oraclelist.length - 1];
+              oraclelist.pop();
+              break;
+            }
+          }
+
           emit oracle_unregistered(ethaddress, id);
       }
 
@@ -195,7 +212,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       require(custodians[ethaddress].active == true, "Custodian is not registered");
       require(custodian_count > 7, "Must contain 7 custodians");
       bytes32 id = keccak256(bytes(abi.encodePacked("uc",ethaddress, ucustmapv)));
-      require(approvals[id].approved[msg.sender] == false, "Cannot unregister custodian again");
+      require(approvals[id].approved[msg.sender] == false, "msg.sender has already approved this custodian deactivation");
       int reqcust = ((custodian_count / 3) * 2 + 1);
       if (approvals[id].approvals < reqcust) {
         approvals[id].approvals++;
