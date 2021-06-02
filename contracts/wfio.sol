@@ -39,11 +39,11 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     int ucustmapv;
 
     event unwrapped(string fioaddress, uint256 amount);
-    event wrapped(address ethaddress, uint256 amount, string obtid);
-    event custodian_unregistered(address ethaddress, bytes32 eid);
-    event custodian_registered(address ethaddress, bytes32 eid);
-    event oracle_unregistered(address ethaddress, bytes32 eid);
-    event oracle_registered(address ethaddress, bytes32 eid);
+    event wrapped(address account, uint256 amount, string obtid);
+    event custodian_unregistered(address account, bytes32 eid);
+    event custodian_registered(address account, bytes32 eid);
+    event oracle_unregistered(address account, bytes32 eid);
+    event oracle_registered(address account, bytes32 eid);
 
     mapping ( address => oracle) oracles;
     address[] oraclelist;
@@ -115,14 +115,14 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
         super._beforeTokenTransfer(from, to, amount);
     }
 
-    function getCustodian(address ethaddress) public view returns (bool, int) {
-      require(ethaddress != address(0), "Invalid address");
-      return (custodians[ethaddress].active, custodian_count);
+    function getCustodian(address account) public view returns (bool, int) {
+      require(account != address(0), "Invalid address");
+      return (custodians[account].active, custodian_count);
     }
 
-    function getOracle(address ethaddress) public view returns (bool, int) {
-      require(ethaddress != address(0), "Invalid address");
-      return (oracles[ethaddress].active, oracle_count);
+    function getOracle(address account) public view returns (bool, int) {
+      require(account != address(0), "Invalid address");
+      return (oracles[account].active, oracle_count);
     }
 
     function getOracles() public view returns(address[] memory) {
@@ -135,11 +135,11 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       return (approvals[obthash].approvals, approvals[obthash].account, approvals[obthash].amount);
     }
 
-    function regoracle(address ethaddress) public custodianOnly {
-      require(ethaddress != address(0), "Invalid address");
-      require(ethaddress != msg.sender, "Cannot register self");
-      require(oracles[ethaddress].active == false, "Oracle is already registered");
-      bytes32 id = keccak256(bytes(abi.encodePacked("ro",ethaddress, roracmapv )));
+    function regoracle(address account) public custodianOnly {
+      require(account != address(0), "Invalid address");
+      require(account != msg.sender, "Cannot register self");
+      require(oracles[account].active == false, "Oracle is already registered");
+      bytes32 id = keccak256(bytes(abi.encodePacked("ro",account, roracmapv )));
       require(approvals[id].approved[msg.sender] == false,  "msg.sender has already approved this custodian");
       int reqcust = ((custodian_count / 3) * 2 + 1);
       if (approvals[id].approvals < reqcust) {
@@ -147,51 +147,51 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
         approvals[id].approved[msg.sender] = true;
       }
       if (approvals[id].approvals == reqcust){
-        oracles[ethaddress].active=true;
-        oraclelist.push(ethaddress);
+        oracles[account].active=true;
+        oraclelist.push(account);
         oracle_count++;
         delete approvals[id];
         roracmapv++;
-        emit oracle_registered(ethaddress, id);
+        emit oracle_registered(account, id);
       }
     }
 
-    function unregoracle(address ethaddress) public custodianOnly {
-      require(ethaddress != address(0), "Invalid address");
+    function unregoracle(address account) public custodianOnly {
+      require(account != address(0), "Invalid address");
       require(oracle_count > 0, "No oracles remaining");
-      bytes32 id = keccak256(bytes(abi.encodePacked("uo",ethaddress, uoracmapv)));
+      bytes32 id = keccak256(bytes(abi.encodePacked("uo",account, uoracmapv)));
       require(approvals[id].approved[msg.sender] == false,  "msg.sender has already approved this oracle deactivation");
-      require(oracles[ethaddress].active == true, "Oracle is not registered");
+      require(oracles[account].active == true, "Oracle is not registered");
       int reqcust = ((custodian_count / 3) * 2 + 1);
       if (approvals[id].approvals < reqcust) {
         approvals[id].approvals++;
         approvals[id].approved[msg.sender] = true;
       }
       if ( approvals[id].approvals == reqcust) {
-          oracles[ethaddress].active = false;
-          delete oracles[ethaddress];
+          oracles[account].active = false;
+          delete oracles[account];
           oracle_count--;
           delete approvals[id];
           uoracmapv++;
 
           for(uint16 i = 0; i <= oraclelist.length - 1; i++) {
-            if(oraclelist[i] == ethaddress) {
+            if(oraclelist[i] == account) {
               oraclelist[i] = oraclelist[oraclelist.length - 1];
               oraclelist.pop();
               break;
             }
           }
 
-          emit oracle_unregistered(ethaddress, id);
+          emit oracle_unregistered(account, id);
       }
 
     } // unregoracle
 
-    function regcust(address ethaddress) public custodianOnly {
-      require(ethaddress != address(0), "Invalid address");
-      require(ethaddress != msg.sender, "Cannot register self");
-      bytes32 id = keccak256(bytes(abi.encodePacked("rc",ethaddress, rcustmapv)));
-      require(custodians[ethaddress].active == false, "Custodian is already registered");
+    function regcust(address account) public custodianOnly {
+      require(account != address(0), "Invalid address");
+      require(account != msg.sender, "Cannot register self");
+      bytes32 id = keccak256(bytes(abi.encodePacked("rc",account, rcustmapv)));
+      require(custodians[account].active == false, "Custodian is already registered");
       require(approvals[id].approved[msg.sender] == false,  "msg.sender has already approved this custodian");
       int reqcust = ((custodian_count / 3) * 2 + 1);
       if (approvals[id].approvals < reqcust) {
@@ -199,19 +199,19 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
         approvals[id].approved[msg.sender] = true;
       }
       if (approvals[id].approvals == reqcust) {
-        custodians[ethaddress].active = true;
+        custodians[account].active = true;
         custodian_count++;
         delete approvals[id];
         rcustmapv++;
-        emit custodian_registered(ethaddress, id);
+        emit custodian_registered(account, id);
       }
     }
 
-    function unregcust(address ethaddress) public custodianOnly {
-      require(ethaddress != address(0), "Invalid address");
-      require(custodians[ethaddress].active == true, "Custodian is not registered");
+    function unregcust(address account) public custodianOnly {
+      require(account != address(0), "Invalid address");
+      require(custodians[account].active == true, "Custodian is not registered");
       require(custodian_count > 7, "Must contain 7 custodians");
-      bytes32 id = keccak256(bytes(abi.encodePacked("uc",ethaddress, ucustmapv)));
+      bytes32 id = keccak256(bytes(abi.encodePacked("uc",account, ucustmapv)));
       require(approvals[id].approved[msg.sender] == false, "msg.sender has already approved this custodian deactivation");
       int reqcust = ((custodian_count / 3) * 2 + 1);
       if (approvals[id].approvals < reqcust) {
@@ -219,12 +219,12 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
         approvals[id].approved[msg.sender] = true;
       }
       if ( approvals[id].approvals == reqcust) {
-          custodians[ethaddress].active = false;
-          delete custodians[ethaddress];
+          custodians[account].active = false;
+          delete custodians[account];
           custodian_count--;
           delete approvals[id];
           ucustmapv++;
-          emit custodian_unregistered(ethaddress, id);
+          emit custodian_unregistered(account, id);
       }
     } //unregcustodian
 
