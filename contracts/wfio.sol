@@ -12,7 +12,6 @@ import "@openzeppelin/contracts/token/ERC20/ERC20Pausable.sol";
 contract WFIO is ERC20Burnable, ERC20Pausable {
 
     address owner;
-
     uint256 constant MINTABLE = 10000000000000000;
 
     struct custodian {
@@ -37,6 +36,8 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     int roracmapv;
     int rcustmapv;
     int ucustmapv;
+    int pausemapv;
+    int upausmapv;
 
     event unwrapped(string fioaddress, uint256 amount);
     event wrapped(address account, uint256 amount, string obtid);
@@ -77,7 +78,38 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       _;
     }
 
-    function wrap(address account, uint256 amount, string memory obtid) public oracleOnly {
+    function pause() public custodianOnly whenNotPaused {
+      bytes32 id = keccak256(bytes(abi.encodePacked("pause", pausemapv)));
+      require(approvals[id].approved[msg.sender] == false,  "msg.sender has already approved this pause");
+      int reqcust = ((custodian_count / 3) * 2 + 1);
+      if (approvals[id].approvals < reqcust) {
+        approvals[id].approvals++;
+        approvals[id].approved[msg.sender] = true;
+      }
+      if (approvals[id].approvals == reqcust){
+        delete approvals[id];
+        pausemapv++;
+        _pause();
+      }
+    }
+
+    function unpause() public custodianOnly whenPaused {
+      bytes32 id = keccak256(bytes(abi.encodePacked("unpause", upausmapv)));
+      require(approvals[id].approved[msg.sender] == false,  "msg.sender has already approved this unpause");
+      int reqcust = ((custodian_count / 3) * 2 + 1);
+      if (approvals[id].approvals < reqcust) {
+        approvals[id].approvals++;
+        approvals[id].approved[msg.sender] = true;
+      }
+      if (approvals[id].approvals == reqcust){
+        delete approvals[id];
+        upausmapv++;
+        _unpause();
+      }
+
+    }
+
+    function wrap(address account, uint256 amount, string memory obtid) public oracleOnly whenNotPaused{
       require(amount < MINTABLE);
       require(bytes(obtid).length > 0, "Invalid obtid");
       require(account != address(0), "Invalid account");
@@ -105,7 +137,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
 
     }
 
-    function unwrap(string memory fioaddress, uint256 amount) public {
+    function unwrap(string memory fioaddress, uint256 amount) public whenNotPaused{
       require(bytes(fioaddress).length > 3 && bytes(fioaddress).length <= 64, "Invalid FIO Address");
       _burn(msg.sender, amount);
       emit unwrapped(fioaddress, amount);
@@ -135,7 +167,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       return (approvals[obthash].approvals, approvals[obthash].account, approvals[obthash].amount);
     }
 
-    function regoracle(address account) public custodianOnly {
+    function regoracle(address account) public custodianOnly whenNotPaused {
       require(account != address(0), "Invalid address");
       require(account != msg.sender, "Cannot register self");
       require(oracles[account].active == false, "Oracle is already registered");
@@ -156,7 +188,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       }
     }
 
-    function unregoracle(address account) public custodianOnly {
+    function unregoracle(address account) public custodianOnly whenNotPaused {
       require(account != address(0), "Invalid address");
       require(oracle_count > 0, "No oracles remaining");
       bytes32 id = keccak256(bytes(abi.encodePacked("uo",account, uoracmapv)));
@@ -187,7 +219,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
 
     } // unregoracle
 
-    function regcust(address account) public custodianOnly {
+    function regcust(address account) public custodianOnly whenNotPaused{
       require(account != address(0), "Invalid address");
       require(account != msg.sender, "Cannot register self");
       bytes32 id = keccak256(bytes(abi.encodePacked("rc",account, rcustmapv)));
@@ -207,7 +239,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       }
     }
 
-    function unregcust(address account) public custodianOnly {
+    function unregcust(address account) public custodianOnly whenNotPaused{
       require(account != address(0), "Invalid address");
       require(custodians[account].active == true, "Custodian is not registered");
       require(custodian_count > 7, "Must contain 7 custodians");
