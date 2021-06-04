@@ -167,7 +167,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       return (approvals[obthash].approvals, approvals[obthash].account, approvals[obthash].amount);
     }
 
-    function regoracle(address account) public custodianOnly whenNotPaused {
+    function regoracle(address account) public custodianOnly {
       require(account != address(0), "Invalid address");
       require(account != msg.sender, "Cannot register self");
       require(oracles[account].active == false, "Oracle is already registered");
@@ -188,7 +188,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       }
     }
 
-    function unregoracle(address account) public custodianOnly whenNotPaused {
+    function unregoracle(address account) public custodianOnly {
       require(account != address(0), "Invalid address");
       require(oracle_count > 0, "No oracles remaining");
       bytes32 id = keccak256(bytes(abi.encodePacked("uo",account, uoracmapv)));
@@ -219,7 +219,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
 
     } // unregoracle
 
-    function regcust(address account) public custodianOnly whenNotPaused{
+    function regcust(address account) public custodianOnly {
       require(account != address(0), "Invalid address");
       require(account != msg.sender, "Cannot register self");
       bytes32 id = keccak256(bytes(abi.encodePacked("rc",account, rcustmapv)));
@@ -239,7 +239,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       }
     }
 
-    function unregcust(address account) public custodianOnly whenNotPaused{
+    function unregcust(address account) public custodianOnly {
       require(account != address(0), "Invalid address");
       require(custodians[account].active == true, "Custodian is not registered");
       require(custodian_count > 7, "Must contain 7 custodians");
