@@ -79,34 +79,11 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     }
 
     function pause() public custodianOnly whenNotPaused {
-      bytes32 id = keccak256(bytes(abi.encodePacked("pause", pausemapv)));
-      require(approvals[id].approved[msg.sender] == false,  "msg.sender has already approved this pause");
-      int reqcust = ((custodian_count / 3) * 2 + 1);
-      if (approvals[id].approvals < reqcust) {
-        approvals[id].approvals++;
-        approvals[id].approved[msg.sender] = true;
-      }
-      if (approvals[id].approvals == reqcust){
-        delete approvals[id];
-        pausemapv++;
         _pause();
-      }
     }
 
     function unpause() public custodianOnly whenPaused {
-      bytes32 id = keccak256(bytes(abi.encodePacked("unpause", upausmapv)));
-      require(approvals[id].approved[msg.sender] == false,  "msg.sender has already approved this unpause");
-      int reqcust = ((custodian_count / 3) * 2 + 1);
-      if (approvals[id].approvals < reqcust) {
-        approvals[id].approvals++;
-        approvals[id].approved[msg.sender] = true;
-      }
-      if (approvals[id].approvals == reqcust){
-        delete approvals[id];
-        upausmapv++;
         _unpause();
-      }
-
     }
 
     function wrap(address account, uint256 amount, string memory obtid) public oracleOnly whenNotPaused{
