@@ -36,8 +36,6 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     int roracmapv;
     int rcustmapv;
     int ucustmapv;
-    int pausemapv;
-    int upausmapv;
 
     event unwrapped(string fioaddress, uint256 amount);
     event wrapped(address account, uint256 amount, string obtid);
