@@ -3,11 +3,11 @@
 // Adam Androulidakis 2/2021
 // Prototype: Do not use in production
 
-pragma solidity ^0.6.0;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20Burnable.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20Pausable.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
 
 contract WFIO is ERC20Burnable, ERC20Pausable {
 
@@ -51,10 +51,9 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     mapping ( address => custodian) custodians;
     mapping ( bytes32 => pending) approvals; // bytes32 hash can be any obtid
 
-    constructor(uint256 _initialSupply, address[] memory newcustodians ) public ERC20("FIO Protocol", "wFIO") {
+    constructor(uint256 _initialSupply, address[] memory newcustodians ) ERC20("FIO Protocol", "wFIO") {
       require(newcustodians.length == 10, "wFIO cannot deploy without 10 custodians");
       _mint(msg.sender, _initialSupply);
-      _setupDecimals(9);
       owner = msg.sender;
       for (uint8 i = 0; i < 10; i++ ) {
         require(newcustodians[i] != owner, "Contract owner cannot be custodian");
@@ -78,15 +77,15 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       _;
     }
 
-    function pause() public custodianOnly whenNotPaused {
+    function pause() external custodianOnly whenNotPaused {
         _pause();
     }
 
-    function unpause() public custodianOnly whenPaused {
+    function unpause() external custodianOnly whenPaused {
         _unpause();
     }
 
-    function wrap(address account, uint256 amount, string memory obtid) public oracleOnly whenNotPaused{
+    function wrap(address account, uint256 amount, string memory obtid) external oracleOnly whenNotPaused{
       require(amount < MINTABLE);
       require(bytes(obtid).length > 0, "Invalid obtid");
       require(account != address(0), "Invalid account");
@@ -114,7 +113,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
 
     }
 
-    function unwrap(string memory fioaddress, uint256 amount) public whenNotPaused{
+    function unwrap(string memory fioaddress, uint256 amount) external whenNotPaused{
       require(bytes(fioaddress).length > 3 && bytes(fioaddress).length <= 64, "Invalid FIO Address");
       _burn(msg.sender, amount);
       emit unwrapped(fioaddress, amount);
@@ -124,27 +123,27 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
         super._beforeTokenTransfer(from, to, amount);
     }
 
-    function getCustodian(address account) public view returns (bool, int) {
+    function getCustodian(address account) external view returns (bool, int) {
       require(account != address(0), "Invalid address");
       return (custodians[account].active, custodian_count);
     }
 
-    function getOracle(address account) public view returns (bool, int) {
+    function getOracle(address account) external view returns (bool, int) {
       require(account != address(0), "Invalid address");
       return (oracles[account].active, oracle_count);
     }
 
-    function getOracles() public view returns(address[] memory) {
+    function getOracles() external view returns(address[] memory) {
       return oraclelist;
     }
 
-    function getApproval(string memory obtid) public view returns (int, address, uint256) {
+    function getApproval(string memory obtid) external view returns (int, address, uint256) {
       require(bytes(obtid).length > 0, "Invalid obtid");
       bytes32 obthash = keccak256(bytes(abi.encodePacked(obtid)));
       return (approvals[obthash].approvals, approvals[obthash].account, approvals[obthash].amount);
     }
 
-    function regoracle(address account) public custodianOnly {
+    function regoracle(address account) external custodianOnly {
       require(account != address(0), "Invalid address");
       require(account != msg.sender, "Cannot register self");
       require(oracles[account].active == false, "Oracle is already registered");
@@ -165,7 +164,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       }
     }
 
-    function unregoracle(address account) public custodianOnly {
+    function unregoracle(address account) external custodianOnly {
       require(account != address(0), "Invalid address");
       require(oracle_count > 0, "No oracles remaining");
       bytes32 id = keccak256(bytes(abi.encodePacked("uo",account, uoracmapv)));
@@ -196,7 +195,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
 
     } // unregoracle
 
-    function regcust(address account) public custodianOnly {
+    function regcust(address account) external custodianOnly {
       require(account != address(0), "Invalid address");
       require(account != msg.sender, "Cannot register self");
       bytes32 id = keccak256(bytes(abi.encodePacked("rc",account, rcustmapv)));
@@ -216,7 +215,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       }
     }
 
-    function unregcust(address account) public custodianOnly {
+    function unregcust(address account) external custodianOnly {
       require(account != address(0), "Invalid address");
       require(custodians[account].active == true, "Custodian is not registered");
       require(custodian_count > 7, "Must contain 7 custodians");
@@ -242,6 +241,10 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     // ------------------------------------------------------------------------
     receive () external payable {
         revert();
+    }
+
+    function decimals() public view virtual override returns (uint8) {
+        return 9;
     }
 
 }
