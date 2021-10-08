@@ -57,6 +57,8 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       owner = msg.sender;
       for (uint8 i = 0; i < 10; i++ ) {
         require(newcustodians[i] != owner, "Contract owner cannot be custodian");
+        require(custodians[newcustodians[i]].active == false, "custodian already entered");
+        require(newcustodians[i] != address(0), "Invalid account");
         custodians[newcustodians[i]].active = true;
       }
       custodian_count = 10;
