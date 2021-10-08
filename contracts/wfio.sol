@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20Pausable.sol";
 contract WFIO is ERC20Burnable, ERC20Pausable {
 
     address owner;
-    uint256 constant MINTABLE = 10000000000000000;
+    uint256 constant MINTABLE = 1e16;
 
     struct custodian {
       bool active;
