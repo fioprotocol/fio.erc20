@@ -90,7 +90,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       require(bytes(obtid).length > 0, "Invalid obtid");
       require(account != address(0), "Invalid account");
       require(oracle_count >= 3, "Oracles must be 3 or greater");
-      bytes32 obthash = keccak256(bytes(abi.encodePacked(obtid)));
+      bytes32 obthash = keccak256(bytes(abi.encode(obtid)));
       if (approvals[obthash].approvals < oracle_count) {
         require(approvals[obthash].approved[msg.sender] == false, "oracle has already approved this obtid");
         approvals[obthash].approvals++;
@@ -139,7 +139,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
 
     function getApproval(string memory obtid) external view returns (int, address, uint256) {
       require(bytes(obtid).length > 0, "Invalid obtid");
-      bytes32 obthash = keccak256(bytes(abi.encodePacked(obtid)));
+      bytes32 obthash = keccak256(bytes(abi.encode(obtid)));
       return (approvals[obthash].approvals, approvals[obthash].account, approvals[obthash].amount);
     }
 
@@ -147,7 +147,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       require(account != address(0), "Invalid address");
       require(account != msg.sender, "Cannot register self");
       require(oracles[account].active == false, "Oracle is already registered");
-      bytes32 id = keccak256(bytes(abi.encodePacked("ro",account, roracmapv )));
+      bytes32 id = keccak256(bytes(abi.encode("ro",account, roracmapv )));
       require(approvals[id].approved[msg.sender] == false,  "msg.sender has already approved this custodian");
       int reqcust = ((custodian_count / 3) * 2 + 1);
       if (approvals[id].approvals < reqcust) {
@@ -167,7 +167,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     function unregoracle(address account) external custodianOnly {
       require(account != address(0), "Invalid address");
       require(oracle_count > 0, "No oracles remaining");
-      bytes32 id = keccak256(bytes(abi.encodePacked("uo",account, uoracmapv)));
+      bytes32 id = keccak256(bytes(abi.encode("uo",account, uoracmapv)));
       require(approvals[id].approved[msg.sender] == false,  "msg.sender has already approved this oracle deactivation");
       require(oracles[account].active == true, "Oracle is not registered");
       int reqcust = ((custodian_count / 3) * 2 + 1);
@@ -198,7 +198,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     function regcust(address account) external custodianOnly {
       require(account != address(0), "Invalid address");
       require(account != msg.sender, "Cannot register self");
-      bytes32 id = keccak256(bytes(abi.encodePacked("rc",account, rcustmapv)));
+      bytes32 id = keccak256(bytes(abi.encode("rc",account, rcustmapv)));
       require(custodians[account].active == false, "Custodian is already registered");
       require(approvals[id].approved[msg.sender] == false,  "msg.sender has already approved this custodian");
       int reqcust = ((custodian_count / 3) * 2 + 1);
@@ -219,7 +219,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       require(account != address(0), "Invalid address");
       require(custodians[account].active == true, "Custodian is not registered");
       require(custodian_count > 7, "Must contain 7 custodians");
-      bytes32 id = keccak256(bytes(abi.encodePacked("uc",account, ucustmapv)));
+      bytes32 id = keccak256(bytes(abi.encode("uc",account, ucustmapv)));
       require(approvals[id].approved[msg.sender] == false, "msg.sender has already approved this custodian deactivation");
       int reqcust = ((custodian_count / 3) * 2 + 1);
       if (approvals[id].approvals < reqcust) {
