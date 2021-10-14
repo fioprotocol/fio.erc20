@@ -149,7 +149,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       require(oracles[account].active == false, "Oracle is already registered");
       bytes32 id = keccak256(bytes(abi.encode("ro",account, roracmapv )));
       require(approvals[id].approved[msg.sender] == false,  "msg.sender has already approved this custodian");
-      int reqcust = ((custodian_count / 3) * 2 + 1);
+      int reqcust = custodian_count * 2 / 3 + 1;
       if (approvals[id].approvals < reqcust) {
         approvals[id].approvals++;
         approvals[id].approved[msg.sender] = true;
@@ -170,7 +170,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       bytes32 id = keccak256(bytes(abi.encode("uo",account, uoracmapv)));
       require(approvals[id].approved[msg.sender] == false,  "msg.sender has already approved this oracle deactivation");
       require(oracles[account].active == true, "Oracle is not registered");
-      int reqcust = ((custodian_count / 3) * 2 + 1);
+      int reqcust = custodian_count * 2 / 3 + 1;
       if (approvals[id].approvals < reqcust) {
         approvals[id].approvals++;
         approvals[id].approved[msg.sender] = true;
@@ -201,7 +201,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       bytes32 id = keccak256(bytes(abi.encode("rc",account, rcustmapv)));
       require(custodians[account].active == false, "Custodian is already registered");
       require(approvals[id].approved[msg.sender] == false,  "msg.sender has already approved this custodian");
-      int reqcust = ((custodian_count / 3) * 2 + 1);
+      int reqcust = custodian_count * 2 / 3 + 1;
       if (approvals[id].approvals < reqcust) {
         approvals[id].approvals++;
         approvals[id].approved[msg.sender] = true;
@@ -221,7 +221,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       require(custodian_count > 7, "Must contain 7 custodians");
       bytes32 id = keccak256(bytes(abi.encode("uc",account, ucustmapv)));
       require(approvals[id].approved[msg.sender] == false, "msg.sender has already approved this custodian deactivation");
-      int reqcust = ((custodian_count / 3) * 2 + 1);
+      int reqcust = custodian_count * 2 / 3 + 1;
       if (approvals[id].approvals < reqcust) {
         approvals[id].approvals++;
         approvals[id].approved[msg.sender] = true;
