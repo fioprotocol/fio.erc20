@@ -55,7 +55,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       owner = msg.sender;
       for (uint8 i = 0; i < 10; i++ ) {
         require(newcustodians[i] != owner, "Contract owner cannot be custodian");
-        require(custodians[newcustodians[i]].active == false, "custodian already entered");
+        require(!custodians[newcustodians[i]].active, "custodian already entered");
         require(newcustodians[i] != address(0), "Invalid account");
         custodians[newcustodians[i]].active = true;
       }
@@ -64,14 +64,14 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     }
 
     modifier oracleOnly {
-      require(oracles[msg.sender].active == true,
+      require(oracles[msg.sender].active,
          "Only a wFIO oracle may call this function."
       );
       _;
     }
 
     modifier custodianOnly {
-      require(custodians[msg.sender].active == true,
+      require(custodians[msg.sender].active,
          "Only a wFIO custodian may call this function."
       );
       _;
@@ -92,7 +92,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       require(oracle_count >= 3, "Oracles must be 3 or greater");
       bytes32 obthash = keccak256(bytes(abi.encode(obtid)));
       if (approvals[obthash].approvals < oracle_count) {
-        require(approvals[obthash].approved[msg.sender] == false, "oracle has already approved this obtid");
+        require(!approvals[obthash].approved[msg.sender], "oracle has already approved this obtid");
         approvals[obthash].approvals++;
         approvals[obthash].approved[msg.sender] = true;
       }
@@ -105,7 +105,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
         require(approvals[obthash].amount == amount, "amount does not match prior approvals");
       }
       if (approvals[obthash].approvals == oracle_count) {
-       require(approvals[obthash].approved[msg.sender] == true, "An approving oracle must execute wrap");
+       require(approvals[obthash].approved[msg.sender], "An approving oracle must execute wrap");
          _mint(account, amount);
          emit wrapped(account, amount, obtid);
         delete approvals[obthash];
@@ -146,9 +146,9 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     function regoracle(address account) external custodianOnly {
       require(account != address(0), "Invalid address");
       require(account != msg.sender, "Cannot register self");
-      require(oracles[account].active == false, "Oracle is already registered");
+      require(!oracles[account].active, "Oracle is already registered");
       bytes32 id = keccak256(bytes(abi.encode("ro",account, roracmapv )));
-      require(approvals[id].approved[msg.sender] == false,  "msg.sender has already approved this custodian");
+      require(!approvals[id].approved[msg.sender],  "msg.sender has already approved this custodian");
       int reqcust = custodian_count * 2 / 3 + 1;
       if (approvals[id].approvals < reqcust) {
         approvals[id].approvals++;
@@ -168,8 +168,8 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       require(account != address(0), "Invalid address");
       require(oracle_count > 0, "No oracles remaining");
       bytes32 id = keccak256(bytes(abi.encode("uo",account, uoracmapv)));
-      require(approvals[id].approved[msg.sender] == false,  "msg.sender has already approved this oracle deactivation");
-      require(oracles[account].active == true, "Oracle is not registered");
+      require(!approvals[id].approved[msg.sender],  "msg.sender has already approved this oracle deactivation");
+      require(oracles[account].active, "Oracle is not registered");
       int reqcust = custodian_count * 2 / 3 + 1;
       if (approvals[id].approvals < reqcust) {
         approvals[id].approvals++;
@@ -199,8 +199,8 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       require(account != address(0), "Invalid address");
       require(account != msg.sender, "Cannot register self");
       bytes32 id = keccak256(bytes(abi.encode("rc",account, rcustmapv)));
-      require(custodians[account].active == false, "Custodian is already registered");
-      require(approvals[id].approved[msg.sender] == false,  "msg.sender has already approved this custodian");
+      require(custodians[account].active, "Custodian is already registered");
+      require(!approvals[id].approved[msg.sender],  "msg.sender has already approved this custodian");
       int reqcust = custodian_count * 2 / 3 + 1;
       if (approvals[id].approvals < reqcust) {
         approvals[id].approvals++;
@@ -217,10 +217,10 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
 
     function unregcust(address account) external custodianOnly {
       require(account != address(0), "Invalid address");
-      require(custodians[account].active == true, "Custodian is not registered");
+      require(custodians[account].active, "Custodian is not registered");
       require(custodian_count > 7, "Must contain 7 custodians");
       bytes32 id = keccak256(bytes(abi.encode("uc",account, ucustmapv)));
-      require(approvals[id].approved[msg.sender] == false, "msg.sender has already approved this custodian deactivation");
+      require(!approvals[id].approved[msg.sender], "msg.sender has already approved this custodian deactivation");
       int reqcust = custodian_count * 2 / 3 + 1;
       if (approvals[id].approvals < reqcust) {
         approvals[id].approvals++;
