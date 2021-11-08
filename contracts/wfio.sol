@@ -199,7 +199,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       require(account != address(0), "Invalid address");
       require(account != msg.sender, "Cannot register self");
       bytes32 id = keccak256(bytes(abi.encode("rc",account, rcustmapv)));
-      require(custodians[account].active, "Custodian is already registered");
+      require(!custodians[account].active, "Custodian is already registered");
       require(!approvals[id].approved[msg.sender],  "msg.sender has already approved this custodian");
       int reqcust = custodian_count * 2 / 3 + 1;
       if (approvals[id].approvals < reqcust) {
