@@ -1,4 +1,4 @@
-var Contract = artifacts.require("./wfio.sol");
+var Contract = artifacts.require("WFIO");
 var Custodians = [
   '0xbb8963B0d68DE4669663e987e3a82EA41CA8Fd0d',
   '0xC24ae0A7a92055828c10521E2Cae4F06b01026Ce',
