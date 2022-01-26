@@ -1,16 +1,19 @@
+const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
+
 var Contract = artifacts.require("WFIO");
-var Custodians = [
-  '0xbb8963B0d68DE4669663e987e3a82EA41CA8Fd0d',
-  '0xC24ae0A7a92055828c10521E2Cae4F06b01026Ce',
-  '0xd7e87C88935feA016A6838F5420FC6B79bD67Bf2',
-  '0x4763aC7610B3CbA72522625238701Db72b8f5ed1',
-  '0x9C4528d3a8A501A46454336CCf6883a6Fb59e97f',
-  '0xA82349D996B36e64d8b8903C20A2dCC9659cbE71',
-  '0x7A0301bCAEFD2529Ec3780c3282F087279aC481E',
-  '0xF103bD38C31Fc2C8d99D711Ed5398d2966484388',
-  '0x14a9E85107077476FbAC5779C069107753FcDD6b',
-  '0x7621D2fF61EB02cAE56AdEb1428FfB47DB3B8324'
-];
-module.exports = function(deployer) {
-  deployer.deploy(Contract, 0, Custodians);
+var Custodians =[
+  '0xf74634D31E30b7f9f06e30dDb7Be729C2f136bb7',
+  '0x773171b2977059ffe47b2620bB52e2a5C456ed41',
+  '0xDd8D967974b451cF25116E673b987DCD407bc9fc',
+  '0x226172d1D968A975688Dcf72346ABBab93E97411',
+  '0xDFaA71cAfa2624c403cC8FC18cbC2f9139290fc2',
+  '0x61e3D238B0687b7c54F195776F91C2fDa452Fb66',
+  '0xDbe7FA5bDab52EEAFfd79c9f382E57fb641C10FF',
+  '0x4A66C0f2159989bfD7900658129d43019db9528D',
+  '0x3f8d7D92513084318Eca0736806fc316C208cA47',
+  '0x1e4a59E644C003FA8e3FdCE77ef9851fCBa2f0c6'
+]
+module.exports = async function (deployer) {
+  const instance = await deployProxy(Contract, [0, Custodians], { deployer });
+  //const upgraded = await upgradeProxy(instance.address, Contract, {deployer});
 };

@@ -3,24 +3,24 @@
 // Adam Androulidakis 2/2021
 // Prototype: Do not use in production
 
-pragma solidity 0.8.0;
+pragma solidity 0.8.4;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract WFIO is ERC20Burnable, ERC20Pausable {
+contract WFIO is ERC20Upgradeable, ERC20BurnableUpgradeable, ERC20PausableUpgradeable, AccessControlUpgradeable {
 
     address owner;
     uint256 constant MINTABLE = 1e16;
 
-    struct custodian {
-      bool active;
-    }
-
-    struct oracle {
-      bool active;
-    }
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant ORACLE_ROLE = keccak256("ORACLE_ROLE");
+    bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
+    bytes32 public constant CUSTODIAN_ROLE = keccak256("CUSTODIAN_ROLE");
 
     struct pending {
       mapping (address => bool) approved;
@@ -44,48 +44,41 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     event oracle_unregistered(address account, bytes32 eid);
     event oracle_registered(address account, bytes32 eid);
 
-    mapping ( address => oracle) oracles;
     address[] oraclelist;
-    mapping ( address => custodian) custodians;
     mapping ( bytes32 => pending) approvals; // bytes32 hash can be any obtid
 
-    constructor(uint256 _initialSupply, address[] memory newcustodians ) ERC20("FIO Protocol", "wFIO") {
+    function initialize(uint256 _initialSupply, address[] memory newcustodians ) initializer public {
+
+    __ERC20_init("FIO Protocol","wFIO");
+    __AccessControl_init();
+    __Pausable_init();
+    _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    _grantRole(PAUSER_ROLE, msg.sender);
+    _grantRole(MINTER_ROLE, msg.sender);
+    _grantRole(OWNER_ROLE, msg.sender);
+
       require(newcustodians.length == 10, "wFIO cannot deploy without 10 custodians");
       _mint(msg.sender, _initialSupply);
       owner = msg.sender;
       for (uint8 i = 0; i < 10; i++ ) {
         require(newcustodians[i] != owner, "Contract owner cannot be custodian");
-        require(!custodians[newcustodians[i]].active, "custodian already entered");
+        require(!hasRole(CUSTODIAN_ROLE, newcustodians[i]), "custodian already entered");
         require(newcustodians[i] != address(0), "Invalid account");
-        custodians[newcustodians[i]].active = true;
+        _grantRole(CUSTODIAN_ROLE, newcustodians[i]);
       }
       custodian_count = 10;
       oracle_count = 0;
     }
 
-    modifier oracleOnly {
-      require(oracles[msg.sender].active,
-         "Only a wFIO oracle may call this function."
-      );
-      _;
-    }
-
-    modifier custodianOnly {
-      require(custodians[msg.sender].active,
-         "Only a wFIO custodian may call this function."
-      );
-      _;
-    }
-
-    function pause() external custodianOnly whenNotPaused {
+    function pause() external onlyRole(CUSTODIAN_ROLE) whenNotPaused {
         _pause();
     }
 
-    function unpause() external custodianOnly whenPaused {
+    function unpause() external onlyRole(CUSTODIAN_ROLE) whenPaused {
         _unpause();
     }
 
-    function wrap(address account, uint256 amount, string memory obtid) external oracleOnly whenNotPaused{
+    function wrap(address account, uint256 amount, string memory obtid) external onlyRole(ORACLE_ROLE) whenNotPaused{
       require(amount < MINTABLE);
       require(bytes(obtid).length > 0, "Invalid obtid");
       require(account != address(0), "Invalid account");
@@ -119,18 +112,18 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       emit unwrapped(fioaddress, amount);
     }
 
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Pausable) {
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal override(ERC20Upgradeable, ERC20PausableUpgradeable) {
         super._beforeTokenTransfer(from, to, amount);
     }
 
     function getCustodian(address account) external view returns (bool, int) {
       require(account != address(0), "Invalid address");
-      return (custodians[account].active, custodian_count);
+      return (hasRole(CUSTODIAN_ROLE, account), custodian_count);
     }
 
     function getOracle(address account) external view returns (bool, int) {
       require(account != address(0), "Invalid address");
-      return (oracles[account].active, oracle_count);
+      return (hasRole(ORACLE_ROLE, account), int(oraclelist.length));
     }
 
     function getOracles() external view returns(address[] memory) {
@@ -143,10 +136,10 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       return (approvals[obthash].approvals, approvals[obthash].account, approvals[obthash].amount);
     }
 
-    function regoracle(address account) external custodianOnly {
+    function regoracle(address account) external onlyRole(CUSTODIAN_ROLE) {
       require(account != address(0), "Invalid address");
       require(account != msg.sender, "Cannot register self");
-      require(!oracles[account].active, "Oracle is already registered");
+      require(!hasRole(ORACLE_ROLE, account), "Oracle is already registered");
       bytes32 id = keccak256(bytes(abi.encode("ro",account, roracmapv )));
       require(!approvals[id].approved[msg.sender],  "msg.sender has already approved this custodian");
       int reqcust = custodian_count * 2 / 3 + 1;
@@ -155,7 +148,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
         approvals[id].approved[msg.sender] = true;
       }
       if (approvals[id].approvals == reqcust){
-        oracles[account].active=true;
+        _grantRole(ORACLE_ROLE, account);
         oraclelist.push(account);
         oracle_count++;
         delete approvals[id];
@@ -164,20 +157,19 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       }
     }
 
-    function unregoracle(address account) external custodianOnly {
+    function unregoracle(address account) external onlyRole(CUSTODIAN_ROLE) {
       require(account != address(0), "Invalid address");
       require(oracle_count > 0, "No oracles remaining");
       bytes32 id = keccak256(bytes(abi.encode("uo",account, uoracmapv)));
       require(!approvals[id].approved[msg.sender],  "msg.sender has already approved this oracle deactivation");
-      require(oracles[account].active, "Oracle is not registered");
+      require(hasRole(ORACLE_ROLE, account), "Oracle is not registered");
       int reqcust = custodian_count * 2 / 3 + 1;
       if (approvals[id].approvals < reqcust) {
         approvals[id].approvals++;
         approvals[id].approved[msg.sender] = true;
       }
       if ( approvals[id].approvals == reqcust) {
-          oracles[account].active = false;
-          delete oracles[account];
+          _revokeRole(ORACLE_ROLE, account);
           oracle_count--;
           delete approvals[id];
           uoracmapv++;
@@ -195,11 +187,11 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
 
     } // unregoracle
 
-    function regcust(address account) external custodianOnly {
+    function regcust(address account) external onlyRole(CUSTODIAN_ROLE) {
       require(account != address(0), "Invalid address");
       require(account != msg.sender, "Cannot register self");
       bytes32 id = keccak256(bytes(abi.encode("rc",account, rcustmapv)));
-      require(!custodians[account].active, "Custodian is already registered");
+      require(!hasRole(CUSTODIAN_ROLE, account), "Custodian is already registered");
       require(!approvals[id].approved[msg.sender],  "msg.sender has already approved this custodian");
       int reqcust = custodian_count * 2 / 3 + 1;
       if (approvals[id].approvals < reqcust) {
@@ -207,7 +199,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
         approvals[id].approved[msg.sender] = true;
       }
       if (approvals[id].approvals == reqcust) {
-        custodians[account].active = true;
+        _grantRole(CUSTODIAN_ROLE, account);
         custodian_count++;
         delete approvals[id];
         rcustmapv++;
@@ -215,9 +207,9 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
       }
     }
 
-    function unregcust(address account) external custodianOnly {
+    function unregcust(address account) external onlyRole(CUSTODIAN_ROLE) {
       require(account != address(0), "Invalid address");
-      require(custodians[account].active, "Custodian is not registered");
+      require(hasRole(CUSTODIAN_ROLE, account), "Custodian is not registered");
       require(custodian_count > 7, "Must contain 7 custodians");
       bytes32 id = keccak256(bytes(abi.encode("uc",account, ucustmapv)));
       require(!approvals[id].approved[msg.sender], "msg.sender has already approved this custodian deactivation");
@@ -227,8 +219,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
         approvals[id].approved[msg.sender] = true;
       }
       if ( approvals[id].approvals == reqcust) {
-          custodians[account].active = false;
-          delete custodians[account];
+          _revokeRole(CUSTODIAN_ROLE, account);
           custodian_count--;
           delete approvals[id];
           ucustmapv++;
