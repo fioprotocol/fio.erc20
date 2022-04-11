@@ -244,6 +244,6 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     }
 
     function decimals() public view virtual override returns (uint8) {
-      return 0;
+      return 9;
     }
 }
