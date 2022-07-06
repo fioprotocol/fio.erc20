@@ -1,4 +1,5 @@
 const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
+const config = require("../config.js");
 
 var Contract = artifacts.require("WFIO");
 var Custodians =[
@@ -12,8 +13,14 @@ var Custodians =[
   '0x4A66C0f2159989bfD7900658129d43019db9528D',
   '0x3f8d7D92513084318Eca0736806fc316C208cA47',
   '0x1e4a59E644C003FA8e3FdCE77ef9851fCBa2f0c6'
-]
-module.exports = async function (deployer) {
-  const instance = await deployProxy(Contract, [0, Custodians], { deployer });
-  //const upgraded = await upgradeProxy(instance.address, Contract, {deployer});
+];
+
+module.exports = async function(deployer, network) {
+  if (network == "development") {
+    Custodians = config.custodians.publicKeys;
+    await deployer.deploy(Contract, 0, Custodians);
+  } else {
+    const instance = await deployProxy(Contract, [0, Custodians], { deployer });
+    //const upgraded = await upgradeProxy(instance.address, Contract, {deployer});
+  }
 };
