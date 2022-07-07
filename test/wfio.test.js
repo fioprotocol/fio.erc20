@@ -26,7 +26,7 @@ contract("WFIO", (address) => {
                     assert.notEqual(address, "");
                     assert.notEqual(address, null);
                     assert.notEqual(address, undefined);
-                    //console.log(address); //for tracking if needed
+                    console.log(address); //for tracking if needed
 
                 } catch (error) {
                 

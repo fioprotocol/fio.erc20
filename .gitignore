@@ -4,3 +4,9 @@ build
 contracts/artifacts
 package-lock.json
 config.js
+*.ldb
+*.log
+CURRENT
+LOCK
+LOG*
+MANIFEST*
