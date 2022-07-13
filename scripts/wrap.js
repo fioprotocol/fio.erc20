@@ -4,11 +4,10 @@ const config = require("../config");
 const WFIO = artifacts.require("WFIO");
 let registeredOracles;
 
-const custodians = config.custodians.publicKeys;
 const oraclePubKey = config.oracles.publicKeys;
 
-const ethAddress = '0x1693F5557f1509E759e6c4D6B8deb5827e22e984';
-const amount = 20000000000; //20 wfio
+const ethAddress = '0x009310e41f4746AFeca3Ac713e070598067A32db';
+const amount = 30000000000; // 20 wfio
 
 module.exports = async (callback) => {
     let wfio;
@@ -43,26 +42,29 @@ module.exports = async (callback) => {
         console.log('getBalance Error: ', err);
     }
 
-    if (registeredOracles.length === 3) {
-        for (const oracle in oraclePubKey) {
+    if (registeredOracles.length === 1) {
+        //for (const oracle in oraclePubKey) {
+        oracle = 0;
             try {
-                const signer = provider.getSigner(oraclePubKey[oracle])
+                const signer = provider.getSigner(oraclePubKey[oracle]);
                 const wfioWithSigner = wfioContract.connect(signer);
 
                 console.log('address: ', signer._address)
 
-                const result = await wfioWithSigner.wrap(ethAddress,amount,'0e45418abe0b1e770403904f95fccb3a39a4e1084d5131296eab6deb558024b1');
-                console.log(`Success: Wrap from ${oraclePubKey[oracle]}: ${result}`);
-                //console.log('Result: ', result)
+                const result = await wfioWithSigner.wrap(ethAddress,amount,'888817abe1b2e820203904f95fccb3a39a4e1084d5131296eab6deb558024b1');
+                console.log(`Success: Wrap from ${oraclePubKey[oracle]}`);
+                console.log('Result: ', result)
+
+                console.log(`Wrapped ${amount} wfio`)
 
             } catch (error) {
                 //console.log('Error: ', error);
                 console.log(`Failure: Wrap ${oraclePubKey[oracle]}: ${JSON.parse(error.body).error.message} `);
             }
-        };
+        //};
     };
 
-    console.log(`Wrapped ${amount} wfio`)
+
 
     try {
         const balance = await wfio.balanceOf(ethAddress);
@@ -70,6 +72,14 @@ module.exports = async (callback) => {
         console.log('Balance after: ', newbal)
     } catch (err) {
         console.log('getBalance Error: ', err);
+    }
+
+    try {
+        console.log('Increase chain time and mine block: ');
+        await provider.send("evm_increaseTime", [100]);
+        await provider.send("evm_mine", []);
+    } catch (err) {
+        console.log('Increase time or block mine Error: ', err);
     }
 
     //callback();

@@ -33,7 +33,8 @@ module.exports = async (callback) => {
     }
 
     if (registeredOracles.length < 3) {
-        for (const oracle in oracles) {
+        //for (const oracle in oracles) {
+        oracle = 0;
             for (const custodian in custodians) {
                 try {
                     const signer = provider.getSigner(custodians[custodian])
@@ -47,7 +48,7 @@ module.exports = async (callback) => {
                     console.log(`Failure: Custodian ${custodians[custodian]} registering ${oracles[oracle]}: ${JSON.parse(error.body).error.message} `);
                 }
             };
-        };
+        //};
     };
 
     try {
