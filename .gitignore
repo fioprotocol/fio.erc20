@@ -1,6 +1,7 @@
-secrets.json
+.env
 build
 node_modules
+contracts/artifacts
 package-lock.json
 .idea
 .DS_Store

@@ -18,14 +18,13 @@
  *
  */
 
-// const HDWalletProvider = require('@truffle/hdwallet-provider');
-// const infuraKey = "fj4jll3k.....";
-//
-// const fs = require('fs');
-// const mnemonic = fs.readFileSync(".secret").toString().trim();
-
 const HDWalletProvider = require('@truffle/hdwallet-provider');
-const { projectId, mnemonic } = require('./secrets.json');
+// create a file at the root of your project and name it .env -- there you can set process variables
+// like the mnemomic and Infura project key below. Note: .env is ignored by git to keep your private information safe
+require('dotenv').config();
+const mnemonic = process.env["MNEMONIC"];
+const appid = process.env["APP_ID"];
+const apikey = process.env["ETHERSCAN_API_KEY"];
 
 module.exports = {
   /**
@@ -51,7 +50,7 @@ module.exports = {
         network_id: "*",       // Any network (default: none)
       },
       goerli: {
-        provider: () => new HDWalletProvider(mnemonic, 'https://goerli.infura.io/v3/' + projectId),
+        provider: () => new HDWalletProvider(mnemonic, 'https://goerli.infura.io/v3/' + appid),
         network_id: 5,
         gas: 9000000,
         confirmations: 2,    // # of confs to wait between deployments. (default: 0)
@@ -77,5 +76,13 @@ module.exports = {
       //  evmVersion: "byzantium"
        }
     }
-  }
+  },
+
+    // Used to automatically verify the contract on etherscan
+    api_keys: {
+        etherscan: apikey,
+    },
+    plugins: [
+        'truffle-plugin-verify'
+    ],
 };
