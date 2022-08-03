@@ -120,8 +120,10 @@ contract WFIO is ERC20Burnable, ERC20Pausable {
     }
 
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Pausable) {
+        require(to != address(this), "Contract cannot receive tokens");
         super._beforeTokenTransfer(from, to, amount);
     }
+
 
     function getCustodian(address account) external view returns (bool, int) {
       require(account != address(0), "Invalid address");
