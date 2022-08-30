@@ -77,11 +77,11 @@ contract WFIO is ERC20Burnable, ERC20Pausable, AccessControl {
     }
 
     //Precondition: Roles must be checked in parent functions. This should only be called by authorized oracle or custodian
-    function getConsensus(bytes32 hash, uint8 approvalType, address account, uint256 amount) internal returns (bool){
+    function getConsensus(bytes32 hash, uint8 Type, address account, uint256 amount) internal returns (bool){
       require(!approvals[hash].complete, "Approval already complete");
 
       uint32 APPROVALS_NEEDED = oracle_count;
-      if (approvalType == 1) {
+      if (Type == 1) {
         APPROVALS_NEEDED = custodian_count * 2 / 3 + 1;
       }
       if (approvals[hash].approvals == 0) {
@@ -203,7 +203,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable, AccessControl {
     function unregcust(address account) external onlyRole(CUSTODIAN_ROLE) {
       require(account != address(0), "Invalid address");
       require(hasRole(CUSTODIAN_ROLE, account), "Custodian not registered");
-      require(custodian_count >= 7, "Must contain 7 custodians");
+      require(custodian_count > 7, "Must contain 7 custodians");
       bytes32 indexhash = keccak256(bytes(abi.encode(ApprovalType.RemoveCustodian,account)));
       require(hasRole(CUSTODIAN_ROLE, account), "Already unregistered");
       if (getConsensus(indexhash, 1, account, 0)) {
