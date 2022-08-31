@@ -167,7 +167,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable, AccessControl {
 
     function unregoracle(address account) external onlyRole(CUSTODIAN_ROLE) {
       require(account != address(0), "Invalid address");
-      require(oracle_count > 0, "No oracles remaining");
+      require(oracle_count > 3, "Minimum 3 oracles required");
       bytes32 indexhash = keccak256(bytes(abi.encode(ApprovalType.RemoveOracle,account)));
       require(hasRole(ORACLE_ROLE, account), "Oracle not registered");
       if ( getConsensus(indexhash, 1, account, 0)) {
