@@ -14,7 +14,6 @@ contract WFIO is ERC20Burnable, ERC20Pausable, AccessControl {
 
     uint256 constant MINTABLE = 1e16;
 
-    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     bytes32 public constant ORACLE_ROLE = keccak256("ORACLE_ROLE");
     bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
     bytes32 public constant CUSTODIAN_ROLE = keccak256("CUSTODIAN_ROLE");
@@ -54,8 +53,6 @@ contract WFIO is ERC20Burnable, ERC20Pausable, AccessControl {
     constructor(uint256 _initialSupply, address[] memory newcustodians ) ERC20("FIO Protocol", "wFIO") {
       require(newcustodians.length == 10, "wFIO cannot deploy without 10 custodians");
       _mint(msg.sender, _initialSupply);
-
-      _grantRole(PAUSER_ROLE, msg.sender);
       _grantRole(OWNER_ROLE, msg.sender);
 
       for (uint8 i = 0; i < 10; i++ ) {
@@ -68,11 +65,11 @@ contract WFIO is ERC20Burnable, ERC20Pausable, AccessControl {
       oracle_count = 0;
     }
 
-    function pause() external onlyRole(CUSTODIAN_ROLE) onlyRole(PAUSER_ROLE) whenNotPaused{
+    function pause() external onlyRole(CUSTODIAN_ROLE) whenNotPaused{
         _pause();
     }
 
-    function unpause() external onlyRole(CUSTODIAN_ROLE) onlyRole(PAUSER_ROLE) whenPaused{
+    function unpause() external onlyRole(CUSTODIAN_ROLE)whenPaused{
         _unpause();
     }
 
