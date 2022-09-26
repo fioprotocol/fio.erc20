@@ -5,12 +5,14 @@
 
 pragma solidity 0.8.7;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
-import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract WFIO is ERC20Burnable, ERC20Pausable, AccessControl {
+
+contract WFIO is ERC20BurnableUpgradeable, ERC20PausableUpgradeable, AccessControlUpgradeable {
 
     uint256 constant MINTABLE = 1e16;
 
@@ -50,8 +52,11 @@ contract WFIO is ERC20Burnable, ERC20Pausable, AccessControl {
 
     mapping ( bytes32 => pending) approvals; // bytes32 hash can be any obtid
 
-    constructor(uint256 _initialSupply, address[] memory newcustodians ) ERC20("FIO Protocol", "wFIO") {
+    function initialize(string memory name, string memory symbol, uint256 _initialSupply, address[] memory newcustodians ) public {
       require(newcustodians.length == 10, "wFIO cannot deploy without 10 custodians");
+      __ERC20_init(name, symbol);
+      __AccessControl_init();
+      __Pausable_init();
       _mint(msg.sender, _initialSupply);
       _grantRole(OWNER_ROLE, msg.sender);
 
@@ -122,7 +127,7 @@ contract WFIO is ERC20Burnable, ERC20Pausable, AccessControl {
       emit unwrapped(fioaddress, amount);
     }
 
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal override(ERC20, ERC20Pausable) {
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal override(ERC20Upgradeable, ERC20PausableUpgradeable) {
         require(to != address(this), "Contract cannot receive tokens");
         super._beforeTokenTransfer(from, to, amount);
     }
