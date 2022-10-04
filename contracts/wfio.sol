@@ -12,7 +12,7 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 
-contract WFIO is ERC20BurnableUpgradeable, ERC20PausableUpgradeable, AccessControlUpgradeable {
+contract WFIO is ERC20Upgradeable, ERC20BurnableUpgradeable, ERC20PausableUpgradeable, AccessControlUpgradeable {
 
     uint256 constant MINTABLE = 1e16;
 
@@ -27,7 +27,7 @@ contract WFIO is ERC20BurnableUpgradeable, ERC20PausableUpgradeable, AccessContr
         AddCustodian,
         RemoveCustodian
     }
-
+ 
     struct pending {
       mapping (address => bool) approved;
       uint32 approvals;
@@ -52,7 +52,7 @@ contract WFIO is ERC20BurnableUpgradeable, ERC20PausableUpgradeable, AccessContr
 
     mapping ( bytes32 => pending) approvals; // bytes32 hash can be any obtid
 
-    function initialize(string memory name, string memory symbol, uint256 _initialSupply, address[] memory newcustodians ) public {
+    function initialize(string memory name, string memory symbol, uint256 _initialSupply, address[] memory newcustodians ) public initializer {
       require(newcustodians.length == 10, "wFIO cannot deploy without 10 custodians");
       __ERC20_init(name, symbol);
       __AccessControl_init();
