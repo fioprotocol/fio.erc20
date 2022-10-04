@@ -143,8 +143,8 @@ contract WFIO is ERC20Burnable, ERC20Pausable, AccessControl {
     }
 
     function getApproval(bytes memory indexhash) external view returns (uint32, address, uint256) {
-      require(obtid.length > 0, "Invalid obtid");
-      return (approvals[bytes32(obtid)].approvals, approvals[bytes32(obtid)].account, approvals[bytes32(obtid)].amount);
+      require(indexhash.length > 0, "Invalid obtid");
+      return (approvals[bytes32(indexhash)].approvals, approvals[bytes32(indexhash)].account, approvals[bytes32(indexhash)].amount);
     }
 
     function regoracle(address account) external onlyRole(CUSTODIAN_ROLE)  {
