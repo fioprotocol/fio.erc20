@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract WFIO is ERC20Burnable, ERC20Pausable, AccessControl {
 
-    uint256 constant MINTABLE = 1e16;
+    uint256 constant MINTABLE = 1e18;
 
     bytes32 public constant ORACLE_ROLE = keccak256("ORACLE_ROLE");
     bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
