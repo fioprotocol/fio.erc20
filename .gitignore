@@ -5,3 +5,6 @@ contracts/artifacts
 package-lock.json
 .idea
 .DS_Store
+.openzeppelin
+artifacts
+cache
