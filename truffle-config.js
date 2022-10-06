@@ -22,7 +22,8 @@ const HDWalletProvider = require('@truffle/hdwallet-provider');
 // create a file at the root of your project and name it .env -- there you can set process variables
 // like the mnemomic and Infura project key below. Note: .env is ignored by git to keep your private information safe
 require('dotenv').config();
-const mnemonic = process.env["MNEMONIC"];
+const mnemonicDevnet = process.env["MNEMONIC_DEVNET"];
+const mnemonicTestnet = process.env["MNEMONIC_TESTNET"];
 const appid = process.env["APP_ID"];
 const apikey = process.env["ETHERSCAN_API_KEY"];
 
@@ -49,13 +50,21 @@ module.exports = {
         port: 8545,            // Standard Ethereum port (default: none)
         network_id: "*",       // Any network (default: none)
       },
-      goerli: {
-        provider: () => new HDWalletProvider(mnemonic, 'https://goerli.infura.io/v3/' + appid),
+      goerli_devnet: {
+        provider: () => new HDWalletProvider(mnemonicDevnet, 'https://goerli.infura.io/v3/' + appid),
         network_id: 5,
         gas: 9000000,
         confirmations: 2,    // # of confs to wait between deployments. (default: 0)
         timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
         skipDryRun: false     // Skip dry run before migrations? (default: false for public nets )
+      },
+      goerli_testnet: {
+          provider: () => new HDWalletProvider(mnemonicTestnet, 'https://goerli.infura.io/v3/' + appid),
+          network_id: 5,
+          gas: 9000000,
+          confirmations: 2,    // # of confs to wait between deployments. (default: 0)
+          timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
+          skipDryRun: false     // Skip dry run before migrations? (default: false for public nets )
       },
   },
 
