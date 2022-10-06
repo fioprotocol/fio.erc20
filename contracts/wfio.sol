@@ -14,7 +14,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract WFIO is ERC20Upgradeable, ERC20BurnableUpgradeable, ERC20PausableUpgradeable, AccessControlUpgradeable {
 
-    uint256 constant MINTABLE = 1e16;
+    uint256 constant MINTABLE = 1e18;
 
     bytes32 public constant ORACLE_ROLE = keccak256("ORACLE_ROLE");
     bytes32 public constant OWNER_ROLE = keccak256("OWNER_ROLE");
@@ -41,11 +41,11 @@ contract WFIO is ERC20Upgradeable, ERC20BurnableUpgradeable, ERC20PausableUpgrad
 
     event unwrapped(string fioaddress, uint256 amount);
     event wrapped(address account, uint256 amount, string obtid);
-    event custodian_unregistered(address account, bytes32 eid);
-    event custodian_registered(address account, bytes32 eid);
-    event oracle_unregistered(address account, bytes32 eid);
-    event oracle_registered(address account, bytes32 eid);
-    event consensus_activity(string signer, bytes32 hash);
+    event custodian_unregistered(address account, bytes32 indexhash);
+    event custodian_registered(address account, bytes32 indexhash);
+    event oracle_unregistered(address account, bytes32 indexhash);
+    event oracle_registered(address account, bytes32 indexhash);
+    event consensus_activity(string signer, address account, string obtid, bytes32 indexhash);
 
     address[] oraclelist;
     address[] custodianlist;
@@ -117,7 +117,7 @@ contract WFIO is ERC20Upgradeable, ERC20BurnableUpgradeable, ERC20PausableUpgrad
          emit wrapped(account, amount, obtid);
       }
 
-      emit consensus_activity("oracle", indexhash);
+      emit consensus_activity("oracle", msg.sender, obtid, indexhash);
 
     }
 
@@ -147,9 +147,18 @@ contract WFIO is ERC20Upgradeable, ERC20BurnableUpgradeable, ERC20PausableUpgrad
       return oraclelist;
     }
 
-    function getApproval(bytes memory obtid) external view returns (uint32, address, uint256) {
-      require(obtid.length > 0, "Invalid obtid");
-      return (approvals[bytes32(obtid)].approvals, approvals[bytes32(obtid)].account, approvals[bytes32(obtid)].amount);
+
+    function getApproval(bytes memory indexhash) external view returns (uint32, address, uint256, address[] memory) {
+      require(indexhash.length > 0, "Invalid obtid");
+      address[] memory approvedOracles = new address[](approvals[bytes32(indexhash)].approvals);
+      uint32 c = 0;
+      for(uint32 i = 0; i < oraclelist.length; i++) {
+        if (approvals[bytes32(indexhash)].approved[oraclelist[i]]) {
+          approvedOracles[c] = oraclelist[i];
+          c++;
+        }
+      }
+      return (approvals[bytes32(indexhash)].approvals, approvals[bytes32(indexhash)].account, approvals[bytes32(indexhash)].amount, approvedOracles);
     }
 
     function regoracle(address account) external onlyRole(CUSTODIAN_ROLE)  {
@@ -163,7 +172,7 @@ contract WFIO is ERC20Upgradeable, ERC20BurnableUpgradeable, ERC20PausableUpgrad
         oraclelist.push(account);
         emit oracle_registered(account, indexhash);
       }
-      emit consensus_activity("custodian", indexhash);
+      emit consensus_activity("custodian", msg.sender, "", indexhash);
     }
 
     function unregoracle(address account) external onlyRole(CUSTODIAN_ROLE) {
@@ -183,7 +192,7 @@ contract WFIO is ERC20Upgradeable, ERC20BurnableUpgradeable, ERC20PausableUpgrad
           }
           emit oracle_unregistered(account, indexhash);
       }
-       emit consensus_activity("custodian", indexhash);
+      emit consensus_activity("custodian", msg.sender, "", indexhash);
 
     } // unregoracle
 
@@ -198,7 +207,7 @@ contract WFIO is ERC20Upgradeable, ERC20BurnableUpgradeable, ERC20PausableUpgrad
         custodianlist.push(account);
         emit custodian_registered(account, indexhash);
       }
-      emit consensus_activity("custodian", indexhash);
+      emit consensus_activity("custodian", msg.sender, "", indexhash);
     }
 
     function unregcust(address account) external onlyRole(CUSTODIAN_ROLE) {
@@ -219,7 +228,7 @@ contract WFIO is ERC20Upgradeable, ERC20BurnableUpgradeable, ERC20PausableUpgrad
           }
           emit custodian_unregistered(account, indexhash);
       }
-      emit consensus_activity("custodian", indexhash);
+      emit consensus_activity("custodian", msg.sender, "", indexhash);
     } //unregcustodian
 
     // ------------------------------------------------------------------------
