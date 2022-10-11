@@ -53,7 +53,7 @@ module.exports = {
       goerli_devnet: {
         provider: () => new HDWalletProvider(mnemonicDevnet, 'https://goerli.infura.io/v3/' + appid),
         network_id: 5,
-        gas: 9000000,
+        gas: 9000000,        // Gas Limit, default is 6721975 (use gasPrice default is 20000000000 (20 Gwei) for price)
         confirmations: 2,    // # of confs to wait between deployments. (default: 0)
         timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
         skipDryRun: false     // Skip dry run before migrations? (default: false for public nets )

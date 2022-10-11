@@ -1,5 +1,3 @@
-const { deployProxy, upgradeProxy } = require('@openzeppelin/truffle-upgrades');
-
 var Contract = artifacts.require("WFIO");
 
 const { CUSTODIANS_LOCAL, CUSTODIANS_DEVNET, CUSTODIANS_TESTNET } = process.env;
