@@ -13,11 +13,13 @@ A .env file with following entries is needed for Truffle deployment:
 
 MNEMONIC=                  # Mnemonic phrase for local Ganache testing
 MNEMONIC_DEVNET=           # Mnemonic phrase for Devnet
-MNEMONIC_TESTNET=          # Mnemonic phrase for Testnet
+MNEMONIC_TESTNET=          # Mnemonic phrase for Goerli Testnet
+MNEMONIC_MAINNET=          # Mnemonic phrase for MAINNET
 APP_ID=                    # Infura API key
 ETHERSCAN_API_KEY=         # Etherscan API key
 CUSTODIANS_DEVNET=         # Comma separated list of initial 10 custodians
 CUSTODIANS_TESTNET=        # Comma separated list of initial 10 custodians
+CUSTODIANS_MAINNET=        # Comma separated list of initial 10 custodians
 # Local testing only
 CUSTODIANS_LOCAL=          # Comma separated list of initial 10 custodians
 ORACLE=                    # Oracle public key used by reg-oracle.js
